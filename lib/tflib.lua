@@ -1,3 +1,7 @@
+onEvt = onEvt or {}
+onEvt.cmd = onEvt.cmd or {}
+onEvt.msg = onEvt.msg or {}
+
 local tf = {}
 
 function tf.queueNew()
@@ -276,7 +280,7 @@ function tf.pcLabelMToNetCh(pcLabelM)
     local pcNetCh = tf.pcLabelMToNetChTab[pcLabelM]
     if not pcNetCh then
         local label, labelSub = tf.labelMToLabelDat(pcLabelM)
-        tf.nmsgSend("pc_label_req", { true, label, labelSub }, tf.NET_CH_BROADCAST)
+        tf.msgSend("pc_label_req", { true, label, labelSub }, tf.NET_CH_BROADCAST)
         local pcLabelRes = tf.evtWaitForNmsgs("pc_label_res")[1]
         local senderNetCh = pcLabelRes[1]
         local senderLabel, senderLabelSub = pcLabelRes[3], pcLabelRes[4]
@@ -292,7 +296,7 @@ end
 function tf.pcNetChToLabelM(pcNetCh, doFancy)
     local pcLabelM = tf.pcNetChToLabelMTab[pcNetCh]
     if not pcLabelM then
-        tf.nmsgSend("pc_label_req", { false }, pcNetCh)
+        tf.msgSend("pc_label_req", { false }, pcNetCh)
         local pcLabelRes = tf.evtWaitForNmsgs("pc_label_res")[1]
         local senderNetCh = pcLabelRes[1]
         if senderNetCh == pcNetCh then
@@ -311,7 +315,7 @@ function tf.pcNetChToLabelM(pcNetCh, doFancy)
     return pcLabelM
 end
 
-function tf.nmsgSend(msgName, msgDat, ch)
+function tf.msgSend(msgName, msgDat, ch)
     if not tf.periNet then
         error("Network not initialized")
     end
@@ -335,11 +339,11 @@ function tf._evtWait(doSkipQueue)
         local evtDat = { os.pullEvent() }
         if evtDat[1] == "chat" and evtDat[3]:sub(1, #tf.CHAT_CMD_PRE) == tf.CHAT_CMD_PRE and #evtDat[3] > #tf.CHAT_CMD_PRE then
             local args = tf.argsParse(evtDat[3]:sub(#tf.CHAT_CMD_PRE + 1))
-            return { "cmd", args[1], { evtDat[2], table.unpack(args, 2) } }                            -- {"cmd", cmd, {sender, cmdArgs...}}
+            return { "cmd", args[1], { evtDat[2], table.unpack(args, 2) } }                           -- {"cmd", cmd, {sender, cmdArgs...}}
         elseif evtDat[1] == "modem_message" and evtDat[5][1] == tf.NMSG_HDR then
-            return { "nmsg", evtDat[5][2], { evtDat[4], evtDat[6] or 0, table.unpack(evtDat[5][3]) } } -- {"nmsg", msg, {senderNetCh, dist, msgDat...}}
+            return { "msg", evtDat[5][2], { evtDat[4], evtDat[6] or 0, table.unpack(evtDat[5][3]) } } -- {"msg", msg, {senderNetCh, dist, msgDat...}}
         elseif evtDat[1] == "timer" then
-            return { "timer", evtDat[2] }                                                              -- {"timer", timerId}
+            return { "timer", evtDat[2] }                                                             -- {"timer", timerId}
         end
         tf.dbgPrint("Event ignored: " .. evtDat[1])
     end
@@ -351,7 +355,7 @@ function tf.evtWait(doSkipQueue)
     return evt
 end
 
-function tf.evtWaitForNmsgs(nmsgName, cntMax, timeout)
+function tf.evtWaitForNmsgs(msgName, cntMax, timeout)
     cntMax = cntMax or 1
     timeout = timeout or tf.HUGE
     local collectedMsgs = {}
@@ -361,9 +365,9 @@ function tf.evtWaitForNmsgs(nmsgName, cntMax, timeout)
         local evt = tf.evtWait(true) -- Skip queue to prioritize new events
 
         local isAdded = false
-        if evt[1] == "nmsg" then
+        if evt[1] == "msg" then
             local msgName, msgParams = evt[2], evt[3]
-            if msgName == nmsgName then
+            if msgName == msgName then
                 table.insert(collectedMsgs, msgParams)
                 isAdded = true
             end
@@ -384,7 +388,7 @@ function tf.chatSendAs(msg, sender, range)
         if tf.pcNetCh == tf.mainNetCh or sender ~= tf.pcName or range then
             error("Chat not initialized")
         else
-            tf.nmsgSend("chat_send", { msg }, tf.mainNetCh)
+            tf.msgSend("chat_send", { msg }, tf.mainNetCh)
             return
         end
     end
@@ -502,7 +506,7 @@ function tf.init(label, labelSub)
     tf.pcLabelSet(label, labelSub)
     tf.pcNameSet(name)
 
-    tf.nmsgSend("pc_init", { tf.pcLabel, tf.pcLabelSub }, tf.NET_CH_BROADCAST)
+    tf.msgSend("pc_init", { tf.pcLabel, tf.pcLabelSub }, tf.NET_CH_BROADCAST)
     if tf.pcLabel == "main" then
         tf.mainNetCh = tf.pcNetCh
     else
@@ -511,7 +515,7 @@ function tf.init(label, labelSub)
             print("Waiting for main to accept connection...")
         end
         while not pcAccept do
-            tf.nmsgSend("pc_init", { tf.pcLabel, tf.pcLabelSub }, tf.NET_CH_BROADCAST)
+            tf.msgSend("pc_init", { tf.pcLabel, tf.pcLabelSub }, tf.NET_CH_BROADCAST)
             pcAccept = tf.evtWaitForNmsgs("pc_accept", 1, 5.0)[1]
         end
         tf.mainNetCh = pcAccept[1]
@@ -538,20 +542,20 @@ function tf.free()
     tf.periNet = nil
 end
 
-function evtProc_nmsg_pc_label_req(evtParams)
+function onEvt.msg.pc_label_req(evtParams)
     if evtParams[3] then
         if evtParams[4] ~= tf.pcLabel or evtParams[5] ~= tf.pcLabelSub then
             return
         end
     end
-    tf.nmsgSend("pc_label_res", { tf.pcLabel, tf.pcLabelSub }, evtParams[1])
+    tf.msgSend("pc_label_res", { tf.pcLabel, tf.pcLabelSub }, evtParams[1])
 end
 
-function evtProc_nmsg_ping(evtParams)
-    tf.nmsgSend("pong", {}, evtParams[1])
+function onEvt.msg.ping(evtParams)
+    tf.msgSend("pong", {}, evtParams[1])
 end
 
-function evtProc_nmsg_reboot(evtParams)
+function onEvt.msg.reboot(evtParams)
     os.reboot()
 end
 

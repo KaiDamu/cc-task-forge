@@ -1,4 +1,4 @@
-function evtProc_nmsg_so(evtParams)
+function onEvt.msg.so(evtParams)
     local ME_BRIDGE_NAME = "so"
     local meBridge = tf.periObjByLabel(ME_BRIDGE_NAME)
     if not meBridge then
@@ -52,7 +52,7 @@ function evtProc_nmsg_so(evtParams)
     end
 end
 
-function evtProc_nmsg_undress(evtParams)
+function onEvt.msg.undress(evtParams)
     local player = evtParams[3] or "(nameless)"
     local invMgr = tf.periObjByType(tf.PERI_TYPE_INV_MGR, player)
 
@@ -80,7 +80,7 @@ function evtProc_nmsg_undress(evtParams)
     end
 end
 
-function evtProc_nmsg_disenchant(evtParams)
+function onEvt.msg.disenchant(evtParams)
     local ME_BRIDGE_NAME = "disenchant"
     local meBridge = tf.periObjByLabel(ME_BRIDGE_NAME)
     if not meBridge then
@@ -108,7 +108,7 @@ function evtProc_nmsg_disenchant(evtParams)
     tf.chatSend("Disenchant export ended")
 end
 
-function evtProc_nmsg_label_upd(evtParams)
+function onEvt.msg.label_upd(evtParams)
     local periLabel, periName = evtParams[3], evtParams[4]
     if not tf.cfg["labels"] then
         tf.cfg["labels"] = {}
