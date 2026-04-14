@@ -176,6 +176,27 @@ function onEvt.cmd.hello(params, sender)
     tf.chatSend("Hi " .. sender .. "!")
 end
 
+defDat.cmd.help = {
+    params = {
+        { name = "mode", type = tf.type.STR, picks = { "list", "cmd" } },
+        { name = "name", type = tf.type.STR, defa = "" }
+    },
+    desc = "Get help: With 'list' mode, list all commands. With 'cmd' mode, get detailed info about a specific command."
+}
+function onEvt.cmd.help(params)
+    if params[1] == "cmd" then
+        tf.chatSend(tf.cmdHelpStr(params[2]))
+    elseif params[1] == "list" then
+        local cmdList = "Commands:"
+        for cmdName, _ in pairs(defDat.cmd) do
+            cmdList = cmdList .. " " .. cmdName
+        end
+        tf.chatSend(cmdList)
+    else
+        tf.chatSend("Unknown help mode!")
+    end
+end
+
 ---- ==== === ==== ----
 ---- ==== MSG ==== ----
 ---- ==== === ==== ----

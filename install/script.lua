@@ -143,28 +143,7 @@ local function main()
                         local sender = evtParams[1]
                         evtTab[evtName](params, sender)
                     else
-                        local infoMsg = "Usage: " .. evtName
-                        for _, param in ipairs(defDat.cmd[evtName].params) do
-                            local enclose = { " <", ">" }
-                            if param.defa then
-                                enclose = { " [", "]" }
-                            end
-                            infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
-                            if param.picks then
-                                infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
-                            end
-                            if param.defa and param.defa ~= "" then
-                                infoMsg = infoMsg .. " =" .. tostring(param.defa)
-                            end
-                            infoMsg = infoMsg .. enclose[2]
-                        end
-                        if defDat.cmd[evtName].desc then
-                            infoMsg = infoMsg .. " - " .. defDat.cmd[evtName].desc
-                        end
-                        if defDat.cmd[evtName].examples and #defDat.cmd[evtName].examples > 0 then
-                            infoMsg = infoMsg .. " - Example: " .. defDat.cmd[evtName].examples[1]
-                        end
-                        tf.chatSend(infoMsg)
+                        tf.chatSend(tf.cmdHelpStr(evtName))
                     end
                 else
                     tf.chatSend("For command '" .. evtName .. "' there is a handler function but no definition data!")

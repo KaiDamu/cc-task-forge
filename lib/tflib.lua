@@ -561,6 +561,34 @@ function tf.free()
     tf.periNet = nil
 end
 
+function tf.cmdHelpStr(cmdName)
+    if not defDat.cmd[cmdName] then
+        return "No help available for unknown command '" .. cmdName .. "'!"
+    end
+    local infoMsg = "Usage: " .. cmdName
+    for _, param in ipairs(defDat.cmd[cmdName].params) do
+        local enclose = { " <", ">" }
+        if param.defa then
+            enclose = { " [", "]" }
+        end
+        infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+        if param.picks then
+            infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
+        end
+        if param.defa and param.defa ~= "" then
+            infoMsg = infoMsg .. " =" .. tostring(param.defa)
+        end
+        infoMsg = infoMsg .. enclose[2]
+    end
+    if defDat.cmd[cmdName].desc then
+        infoMsg = infoMsg .. " - " .. defDat.cmd[cmdName].desc
+    end
+    if defDat.cmd[cmdName].examples and #defDat.cmd[cmdName].examples > 0 then
+        infoMsg = infoMsg .. " - Example: " .. defDat.cmd[cmdName].examples[1]
+    end
+    return infoMsg
+end
+
 function onEvt.msg.pc_label_req(evtParams)
     if evtParams[3] then
         if evtParams[4] ~= tf.pcLabel or evtParams[5] ~= tf.pcLabelSub then
