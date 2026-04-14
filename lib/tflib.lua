@@ -28,11 +28,17 @@ function tf.queueGet(queue)
 end
 
 tf.type = {}
-tf.type.STR = 1
-tf.type.LABEL_EX = 2
+tf.type.INT = 1
+tf.type.FLOAT = 2
+tf.type.STR = 3
+tf.type.LABEL_M = 4
+tf.type.LABEL_EX = 5
 
 tf.type.toStr = {
+    [tf.type.INT] = "int",
+    [tf.type.FLOAT] = "float",
     [tf.type.STR] = "str",
+    [tf.type.LABEL_M] = "label_m",
     [tf.type.LABEL_EX] = "label_ex"
 }
 
