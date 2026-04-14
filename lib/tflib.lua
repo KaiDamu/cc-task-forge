@@ -1,4 +1,8 @@
+defDat = defDat or {}
+defDat.cmd = defDat.cmd or {}
+
 onEvt = onEvt or {}
+onEvt.sys = onEvt.sys or {}
 onEvt.cmd = onEvt.cmd or {}
 onEvt.msg = onEvt.msg or {}
 
@@ -22,6 +26,15 @@ function tf.queueGet(queue)
     queue.first = queue.first + 1
     return val
 end
+
+tf.type = {}
+tf.type.STR = 1
+tf.type.LABEL_EX = 2
+
+tf.type.toStr = {
+    [tf.type.STR] = "str",
+    [tf.type.LABEL_EX] = "label_ex"
+}
 
 tf.ABS_SIDES = { "top", "bottom", "north", "south", "west", "east" }
 tf.REL_SIDES = { "top", "bottom", "front", "back", "left", "right" }
@@ -521,10 +534,10 @@ function tf.init(label, labelSub)
         tf.mainNetCh = pcAccept[1]
     end
 
-    print(name .. " #" .. tf.pcLabelSub .. " online!")
+    tf.conWriteCol(name .. " #" .. tf.pcLabelSub .. " online!", colors.green)
 
-    if evtProc_sys_init then
-        local sysInitResult = evtProc_sys_init({})
+    if onEvt.sys.init then
+        local sysInitResult = onEvt.sys.init({})
         if sysInitResult then
             return sysInitResult
         end
@@ -534,8 +547,8 @@ function tf.init(label, labelSub)
 end
 
 function tf.free()
-    if evtProc_sys_free then
-        evtProc_sys_free({})
+    if onEvt.sys.free then
+        onEvt.sys.free({})
     end
     tf.periNet.close(tf.pcNetCh)
     tf.periNet.close(tf.NET_CH_BROADCAST)

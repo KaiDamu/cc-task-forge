@@ -1,4 +1,11 @@
-function evtProc_sys_init(evtParams)
+defDat.cmd.perilabel = {
+    params = {
+        { name = "peri_label", type = tf.type.LABEL_EX },
+        { name = "peri_name",  type = tf.type.STR,     picks = { "*", "clear" }, defa = "" }
+    }
+}
+
+function onEvt.sys.init(evtParams)
     tf.periChat = tf.periObjByType(tf.PERI_TYPE_CHAT_BOX)
     if not tf.periChat then
         return "A required Chat Box is not connected!"
@@ -6,7 +13,7 @@ function evtProc_sys_init(evtParams)
     return nil
 end
 
-function evtProc_sys_free(evtParams)
+function onEvt.sys.free(evtParams)
     tf.periChat = nil
 end
 
@@ -51,16 +58,29 @@ function onEvt.cmd.ping(evtParams)
     tf.chatSend("Online devices: " .. (#pongs + 1))
 end
 
-function onEvt.cmd.label(evtParams)
-    if evtParams[2] == "set" then
-        local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(evtParams[3])
-        local periName = evtParams[4]
-        if pcLabel and pcLabelSub and periLabel then
-            local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
-            tf.msgSend("label_upd", { periLabel, periName }, netCh)
-        else
-            tf.chatSend("Usage: label set <pc_label:peri_label> [peri_name - omit to clear]")
+function onEvt.cmd.perilabel(evtParams)
+    local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(evtParams[2])
+    local periName = evtParams[3]
+    if pcLabel and pcLabelSub and periLabel then
+        local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
+        tf.msgSend("label_upd", { periLabel, periName }, netCh)
+    else
+        local usage = "Usage: " .. debug.getinfo(1, "n").name
+        for _, param in ipairs(defDat.cmd.perilabel.params) do
+            local enclose = { " <", ">" }
+            if param.defa then
+                enclose = { " [", "]" }
+            end
+            usage = usage .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+            if param.picks then
+                usage = usage .. " (" .. table.concat(param.picks, "|") .. ")"
+            end
+            if param.defa and param.defa ~= "" then
+                usage = usage .. " =" .. tostring(param.defa)
+            end
+            usage = usage .. enclose[2]
         end
+        tf.chatSend(usage)
     end
 end
 
