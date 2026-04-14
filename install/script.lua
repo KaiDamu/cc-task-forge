@@ -141,7 +141,22 @@ local function main()
                     if (#evtParams - 1) >= defDat.cmd[evtName].paramReqCnt then
                         local params = { table.unpack(evtParams, 2) }
                         local sender = evtParams[1]
-                        evtTab[evtName](params, sender)
+
+                        local isParamErr = false
+                        for i, paramDef in ipairs(defDat.cmd[evtName].params or {}) do
+                            params[i] = tf.type.castStrict(params[i] or paramDef.defa, paramDef.type)
+                            if not params[i] then
+                                isParamErr = true
+                                tf.chatSend("Parameter '" .. paramDef.name .. "' is invalid!")
+                                break
+                            end
+                        end
+
+                        if isParamErr then
+                            tf.chatSend(tf.cmdHelpStr(evtName))
+                        else
+                            evtTab[evtName](params, sender)
+                        end
                     else
                         tf.chatSend(tf.cmdHelpStr(evtName))
                     end

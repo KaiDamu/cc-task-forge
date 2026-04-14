@@ -80,14 +80,10 @@ defDat.cmd.perilabel = {
     examples = { "perilabel chester:so me_bridge_3" }
 }
 function onEvt.cmd.perilabel(params)
-    local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(params[1])
+    local pcLabel, pcLabelSub, periLabel = params[1][1], params[1][2], params[1][3]
     local periName = params[2]
-    if pcLabel and pcLabelSub and periLabel then
-        local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
-        tf.msgSend("label_upd", { periLabel, periName }, netCh)
-    else
-        tf.chatSend("Bad label!")
-    end
+    local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
+    tf.msgSend("label_upd", { periLabel, periName }, netCh)
 end
 
 defDat.cmd.posdef = {
@@ -100,14 +96,10 @@ defDat.cmd.posdef = {
     desc = "Define a computer's position in the world (for example, for GPS)."
 }
 function onEvt.cmd.posdef(params)
-    local pcLabel, pcLabelSub = tf.labelExToLabelDat(params[1])
-    local posX, posY, posZ = tonumber(params[2]), tonumber(params[3]), tonumber(params[4])
-    if pcLabel and pcLabelSub and posX and posY and posZ then
-        local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
-        tf.msgSend("pos_upd", { posX, posY, posZ }, netCh)
-    else
-        tf.chatSend("Bad param!")
-    end
+    local pcLabel, pcLabelSub = params[1][1], params[1][2]
+    local posX, posY, posZ = params[2], params[3], params[4]
+    local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
+    tf.msgSend("pos_upd", { posX, posY, posZ }, netCh)
 end
 
 defDat.cmd.so = {
@@ -153,7 +145,7 @@ defDat.cmd.random = {
 }
 function onEvt.cmd.random(params)
     if params[1] == "color" then
-        local cnt = tonumber(params[2]) or 1
+        local cnt = params[2]
         local COLORS = {
             "black", "red", "green", "brown", "blue", "purple", "cyan", "light_gray", "gray", "pink", "lime", "yellow",
             "light_blue", "magenta", "orange", "white"

@@ -42,6 +42,37 @@ tf.type.toStr = {
     [tf.type.LABEL_EX] = "label_ex"
 }
 
+function tf.type.castStrict(val, type_)
+    if type_ == tf.type.INT then
+        local num = tonumber(val)
+        if num and math.floor(num) == num then
+            return num
+        else
+            return nil
+        end
+    elseif type_ == tf.type.FLOAT then
+        return tonumber(val)
+    elseif type_ == tf.type.STR then
+        return tostring(val)
+    elseif type_ == tf.type.LABEL_M then
+        local label, labelSub, labelObj = tf.labelExToLabelDat(tostring(val))
+        if label and labelSub and not labelObj then
+            return { label, labelSub }
+        else
+            return nil
+        end
+    elseif type_ == tf.type.LABEL_EX then
+        local label, labelSub, labelObj = tf.labelExToLabelDat(tostring(val))
+        if label and labelSub and labelObj then
+            return { label, labelSub, labelObj }
+        else
+            return nil
+        end
+    else
+        return nil
+    end
+end
+
 tf.ABS_SIDES = { "top", "bottom", "north", "south", "west", "east" }
 tf.REL_SIDES = { "top", "bottom", "front", "back", "left", "right" }
 
@@ -566,19 +597,21 @@ function tf.cmdHelpStr(cmdName)
         return "No help available for unknown command '" .. cmdName .. "'!"
     end
     local infoMsg = "Usage: " .. cmdName
-    for _, param in ipairs(defDat.cmd[cmdName].params) do
-        local enclose = { " <", ">" }
-        if param.defa then
-            enclose = { " [", "]" }
+    if defDat.cmd[cmdName].params then
+        for _, param in ipairs(defDat.cmd[cmdName].params) do
+            local enclose = { " <", ">" }
+            if param.defa then
+                enclose = { " [", "]" }
+            end
+            infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+            if param.picks then
+                infoMsg = infoMsg .. " (" .. table.concat(param.picks, " ") .. ")"
+            end
+            if param.defa and param.defa ~= "" then
+                infoMsg = infoMsg .. " =" .. tostring(param.defa)
+            end
+            infoMsg = infoMsg .. enclose[2]
         end
-        infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
-        if param.picks then
-            infoMsg = infoMsg .. " (" .. table.concat(param.picks, " ") .. ")"
-        end
-        if param.defa and param.defa ~= "" then
-            infoMsg = infoMsg .. " =" .. tostring(param.defa)
-        end
-        infoMsg = infoMsg .. enclose[2]
     end
     if defDat.cmd[cmdName].desc then
         infoMsg = infoMsg .. " - " .. defDat.cmd[cmdName].desc
