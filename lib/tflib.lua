@@ -573,7 +573,7 @@ function tf.cmdHelpStr(cmdName)
         end
         infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
         if param.picks then
-            infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
+            infoMsg = infoMsg .. " (" .. table.concat(param.picks, " ") .. ")"
         end
         if param.defa and param.defa ~= "" then
             infoMsg = infoMsg .. " =" .. tostring(param.defa)

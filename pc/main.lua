@@ -188,7 +188,12 @@ function onEvt.cmd.help(params)
         tf.chatSend(tf.cmdHelpStr(params[2]))
     elseif params[1] == "list" then
         local cmdList = "Commands:"
+        local sortedCmds = {}
         for cmdName, _ in pairs(defDat.cmd) do
+            table.insert(sortedCmds, cmdName)
+        end
+        table.sort(sortedCmds)
+        for _, cmdName in ipairs(sortedCmds) do
             cmdList = cmdList .. " " .. cmdName
         end
         tf.chatSend(cmdList)
