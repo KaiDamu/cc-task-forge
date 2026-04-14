@@ -121,9 +121,11 @@ local function main()
     -- Calculate required parameter counts for commands based on their definitions
     for evtName, evtDef in pairs(defDat.cmd) do
         local paramReqCnt_ = 0
-        for _, param in ipairs(evtDef.params) do
-            if not param.defa then
-                paramReqCnt_ = paramReqCnt_ + 1
+        if evtDef.params then
+            for _, param in ipairs(evtDef.params) do
+                if not param.defa then
+                    paramReqCnt_ = paramReqCnt_ + 1
+                end
             end
         end
         defDat.cmd[evtName].paramReqCnt = paramReqCnt_
