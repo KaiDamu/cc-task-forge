@@ -134,29 +134,35 @@ local function main()
         local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
         local evtTab = onEvt[evtType]
         if evtTab and type(evtTab[evtName]) == "function" then
-            if evtType == "cmd" and (#evtParams - 1) < defDat.cmd[evtName].paramReqCnt then
-                local infoMsg = "Usage: " .. evtName
-                for _, param in ipairs(defDat.cmd[evtName].params) do
-                    local enclose = { " <", ">" }
-                    if param.defa then
-                        enclose = { " [", "]" }
+            if evtType == "cmd" then
+                if (#evtParams - 1) >= defDat.cmd[evtName].paramReqCnt then
+                    local params = { table.unpack(evtParams, 2) }
+                    local sender = evtParams[1]
+                    evtTab[evtName](params, sender)
+                else
+                    local infoMsg = "Usage: " .. evtName
+                    for _, param in ipairs(defDat.cmd[evtName].params) do
+                        local enclose = { " <", ">" }
+                        if param.defa then
+                            enclose = { " [", "]" }
+                        end
+                        infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+                        if param.picks then
+                            infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
+                        end
+                        if param.defa and param.defa ~= "" then
+                            infoMsg = infoMsg .. " =" .. tostring(param.defa)
+                        end
+                        infoMsg = infoMsg .. enclose[2]
                     end
-                    infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
-                    if param.picks then
-                        infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
+                    if defDat.cmd[evtName].desc then
+                        infoMsg = infoMsg .. " - " .. defDat.cmd[evtName].desc
                     end
-                    if param.defa and param.defa ~= "" then
-                        infoMsg = infoMsg .. " =" .. tostring(param.defa)
+                    if defDat.cmd[evtName].examples and #defDat.cmd[evtName].examples > 0 then
+                        infoMsg = infoMsg .. " - Example: " .. defDat.cmd[evtName].examples[1]
                     end
-                    infoMsg = infoMsg .. enclose[2]
+                    tf.chatSend(infoMsg)
                 end
-                if defDat.cmd[evtName].desc then
-                    infoMsg = infoMsg .. " - " .. defDat.cmd[evtName].desc
-                end
-                if defDat.cmd[evtName].examples and #defDat.cmd[evtName].examples > 0 then
-                    infoMsg = infoMsg .. " - Example: " .. defDat.cmd[evtName].examples[1]
-                end
-                tf.chatSend(infoMsg)
             else
                 evtTab[evtName](evtParams)
             end

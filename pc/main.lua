@@ -1,3 +1,15 @@
+defDat.cmd.dbg = {
+    desc = "Toggle debug mode (more verbose logging)."
+}
+defDat.cmd.reboot = {
+    desc = "Reboot all connected computers (including this one)."
+}
+defDat.cmd.locate = {
+    desc = "Locate this computer using GPS."
+}
+defDat.cmd.ping = {
+    desc = "Ping all connected computers to see who's online."
+}
 defDat.cmd.perilabel = {
     params = {
         { name = "peri_label", type = tf.type.LABEL_EX },
@@ -19,18 +31,18 @@ function onEvt.sys.free(evtParams)
     tf.periChat = nil
 end
 
-function onEvt.cmd.dbg(evtParams)
+function onEvt.cmd.dbg()
     tf.cfg["isDbg"] = not tf.cfg["isDbg"]
     tf.cfgSave()
     tf.chatSend("Debug mode " .. (tf.cfg["isDbg"] and "enabled" or "disabled"))
 end
 
-function onEvt.cmd.reboot(evtParams)
+function onEvt.cmd.reboot()
     tf.msgSend("reboot", {}, tf.NET_CH_BROADCAST)
     onEvt.msg.reboot({})
 end
 
-function onEvt.cmd.locate(evtParams)
+function onEvt.cmd.locate()
     tf.msgSend("gps_pos_req", {}, tf.NET_CH_BROADCAST)
 
     local posResList = tf.evtWaitForNmsgs("gps_pos_res", 4, 3.0)
@@ -54,25 +66,25 @@ function onEvt.cmd.locate(evtParams)
     end
 end
 
-function onEvt.cmd.ping(evtParams)
+function onEvt.cmd.ping()
     tf.msgSend("ping", {}, tf.NET_CH_BROADCAST)
     local pongs = tf.evtWaitForNmsgs("pong", tf.HUGE, 1.5)
     tf.chatSend("Online devices: " .. (#pongs + 1))
 end
 
-function onEvt.cmd.perilabel(evtParams)
-    local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(evtParams[2])
-    local periName = evtParams[3]
+function onEvt.cmd.perilabel(params)
+    local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(params[1])
+    local periName = params[2]
     if pcLabel and pcLabelSub and periLabel then
         local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
         tf.msgSend("label_upd", { periLabel, periName }, netCh)
     end
 end
 
-function onEvt.cmd.pos(evtParams)
-    if evtParams[2] == "set" then
-        local pcLabel, pcLabelSub = tf.labelExToLabelDat(evtParams[3])
-        local posX, posY, posZ = tonumber(evtParams[4]), tonumber(evtParams[5]), tonumber(evtParams[6])
+function onEvt.cmd.pos(params)
+    if params[1] == "set" then
+        local pcLabel, pcLabelSub = tf.labelExToLabelDat(params[2])
+        local posX, posY, posZ = tonumber(params[3]), tonumber(params[4]), tonumber(params[5])
         if pcLabel and pcLabelSub and posX and posY and posZ then
             local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
             tf.msgSend("pos_upd", { posX, posY, posZ }, netCh)
@@ -82,21 +94,21 @@ function onEvt.cmd.pos(evtParams)
     end
 end
 
-function onEvt.cmd.so(evtParams)
-    tf.msgSend("so", { evtParams[2], evtParams[3] })
+function onEvt.cmd.so(params)
+    tf.msgSend("so", { params[1], params[2] })
 end
 
-function onEvt.cmd.undress(evtParams)
-    tf.msgSend("undress", { evtParams[2] })
+function onEvt.cmd.undress(params)
+    tf.msgSend("undress", { params[1] })
 end
 
-function onEvt.cmd.disenchant(evtParams)
-    tf.msgSend("disenchant", { evtParams[2] })
+function onEvt.cmd.disenchant(params)
+    tf.msgSend("disenchant", { params[1] })
 end
 
-function onEvt.cmd.random(evtParams)
-    if evtParams[2] == "color" then
-        local cnt = tonumber(evtParams[3]) or 1
+function onEvt.cmd.random(params)
+    if params[1] == "color" then
+        local cnt = tonumber(params[2]) or 1
         local COLORS = {
             "black", "red", "green", "brown", "blue", "purple", "cyan", "light_gray", "gray", "pink", "lime", "yellow",
             "light_blue", "magenta", "orange", "white"
@@ -110,8 +122,8 @@ function onEvt.cmd.random(evtParams)
     end
 end
 
-function onEvt.cmd.hello(evtParams)
-    tf.chatSend("Hi " .. evtParams[1] .. "!")
+function onEvt.cmd.hello(params, sender)
+    tf.chatSend("Hi " .. sender .. "!")
 end
 
 function onEvt.msg.chat_send(evtParams)
