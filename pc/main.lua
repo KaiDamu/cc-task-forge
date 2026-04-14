@@ -2,7 +2,9 @@ defDat.cmd.perilabel = {
     params = {
         { name = "peri_label", type = tf.type.LABEL_EX },
         { name = "peri_name",  type = tf.type.STR,     picks = { "*", "clear" }, defa = "" }
-    }
+    },
+    desc = "Link a peripheral name to a computer's peripheral label (or clear it). Or get the linked peripheral name.",
+    examples = { "perilabel chester:so me_bridge_3" }
 }
 
 function onEvt.sys.init(evtParams)
@@ -58,29 +60,35 @@ function onEvt.cmd.ping(evtParams)
     tf.chatSend("Online devices: " .. (#pongs + 1))
 end
 
-function onEvt.cmd.perilabel(evtParams)
+function onEvt.cmd.perilabel(evtParams, fnName)
     local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(evtParams[2])
     local periName = evtParams[3]
     if pcLabel and pcLabelSub and periLabel then
         local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
         tf.msgSend("label_upd", { periLabel, periName }, netCh)
     else
-        local usage = "Usage: " .. debug.getinfo(1, "n").name
+        local infoMsg = "Usage: " .. fnName
         for _, param in ipairs(defDat.cmd.perilabel.params) do
             local enclose = { " <", ">" }
             if param.defa then
                 enclose = { " [", "]" }
             end
-            usage = usage .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+            infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
             if param.picks then
-                usage = usage .. " (" .. table.concat(param.picks, "|") .. ")"
+                infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
             end
             if param.defa and param.defa ~= "" then
-                usage = usage .. " =" .. tostring(param.defa)
+                infoMsg = infoMsg .. " =" .. tostring(param.defa)
             end
-            usage = usage .. enclose[2]
+            infoMsg = infoMsg .. enclose[2]
         end
-        tf.chatSend(usage)
+        if defDat.cmd.perilabel.desc then
+            infoMsg = infoMsg .. " - " .. defDat.cmd.perilabel.desc
+        end
+        if defDat.cmd.perilabel.examples and #defDat.cmd.perilabel.examples > 0 then
+            infoMsg = infoMsg .. " - Example: " .. defDat.cmd.perilabel.examples[1]
+        end
+        tf.chatSend(infoMsg)
     end
 end
 

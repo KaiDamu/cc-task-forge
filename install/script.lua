@@ -120,9 +120,9 @@ local function main()
 
     while true do
         local evt = tf.evtWait()
-        local evtTab = onEvt[evt[1]] -- Access the table for the event type
+        local evtTab = onEvt[evt[1]]        -- Access the table for the event type
         if evtTab and type(evtTab[evt[2]]) == "function" then
-            evtTab[evt[2]](evt[3])   -- Call the function
+            evtTab[evt[2]](evt[3], evt[2])  -- Call the function
         else
         end
     end
