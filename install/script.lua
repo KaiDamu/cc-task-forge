@@ -118,12 +118,48 @@ local function main()
         error(initErr)
     end
 
+    -- Calculate required parameter counts for commands based on their definitions
+    for evtName, evtDef in pairs(defDat.cmd) do
+        local paramReqCnt_ = 0
+        for _, param in ipairs(evtDef.params) do
+            if not param.defa then
+                paramReqCnt_ = paramReqCnt_ + 1
+            end
+        end
+        defDat.cmd[evtName].paramReqCnt = paramReqCnt_
+    end
+
     while true do
         local evt = tf.evtWait()
-        local evtTab = onEvt[evt[1]]        -- Access the table for the event type
-        if evtTab and type(evtTab[evt[2]]) == "function" then
-            evtTab[evt[2]](evt[3], evt[2])  -- Call the function
-        else
+        local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
+        local evtTab = onEvt[evtType]
+        if evtTab and type(evtTab[evtName]) == "function" then
+            if evtType == "cmd" and (#evtParams - 1) < defDat.cmd[evtName].paramReqCnt then
+                local infoMsg = "Usage: " .. evtName
+                for _, param in ipairs(defDat.cmd[evtName].params) do
+                    local enclose = { " <", ">" }
+                    if param.defa then
+                        enclose = { " [", "]" }
+                    end
+                    infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
+                    if param.picks then
+                        infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
+                    end
+                    if param.defa and param.defa ~= "" then
+                        infoMsg = infoMsg .. " =" .. tostring(param.defa)
+                    end
+                    infoMsg = infoMsg .. enclose[2]
+                end
+                if defDat.cmd[evtName].desc then
+                    infoMsg = infoMsg .. " - " .. defDat.cmd[evtName].desc
+                end
+                if defDat.cmd[evtName].examples and #defDat.cmd[evtName].examples > 0 then
+                    infoMsg = infoMsg .. " - Example: " .. defDat.cmd[evtName].examples[1]
+                end
+                tf.chatSend(infoMsg)
+            else
+                evtTab[evtName](evtParams)
+            end
         end
     end
 

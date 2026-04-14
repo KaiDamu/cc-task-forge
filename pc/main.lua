@@ -60,35 +60,12 @@ function onEvt.cmd.ping(evtParams)
     tf.chatSend("Online devices: " .. (#pongs + 1))
 end
 
-function onEvt.cmd.perilabel(evtParams, fnName)
+function onEvt.cmd.perilabel(evtParams)
     local pcLabel, pcLabelSub, periLabel = tf.labelExToLabelDat(evtParams[2])
     local periName = evtParams[3]
     if pcLabel and pcLabelSub and periLabel then
         local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
         tf.msgSend("label_upd", { periLabel, periName }, netCh)
-    else
-        local infoMsg = "Usage: " .. fnName
-        for _, param in ipairs(defDat.cmd.perilabel.params) do
-            local enclose = { " <", ">" }
-            if param.defa then
-                enclose = { " [", "]" }
-            end
-            infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
-            if param.picks then
-                infoMsg = infoMsg .. " (" .. table.concat(param.picks, "|") .. ")"
-            end
-            if param.defa and param.defa ~= "" then
-                infoMsg = infoMsg .. " =" .. tostring(param.defa)
-            end
-            infoMsg = infoMsg .. enclose[2]
-        end
-        if defDat.cmd.perilabel.desc then
-            infoMsg = infoMsg .. " - " .. defDat.cmd.perilabel.desc
-        end
-        if defDat.cmd.perilabel.examples and #defDat.cmd.perilabel.examples > 0 then
-            infoMsg = infoMsg .. " - Example: " .. defDat.cmd.perilabel.examples[1]
-        end
-        tf.chatSend(infoMsg)
     end
 end
 
