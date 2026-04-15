@@ -49,14 +49,14 @@ tf.type = {
     FLOAT = 2,
     STR = 3,
     LABEL_M = 4,
-    LABEL_EX = 5,
-    toStr = {
-        [tf.type.INT] = "int",
-        [tf.type.FLOAT] = "float",
-        [tf.type.STR] = "str",
-        [tf.type.LABEL_M] = "label_m",
-        [tf.type.LABEL_EX] = "label_ex"
-    }
+    LABEL_EX = 5
+}
+tf.type.toStr = {
+    [tf.type.INT] = "int",
+    [tf.type.FLOAT] = "float",
+    [tf.type.STR] = "str",
+    [tf.type.LABEL_M] = "label_m",
+    [tf.type.LABEL_EX] = "label_ex"
 }
 
 function tf.type.castStrict(val, type_)
