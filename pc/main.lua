@@ -73,7 +73,7 @@ end
 
 defDat.cmd.log = {
     params = {
-        { name = "act", type = tf.type.STR, picks = { "save" } }
+        { name = "act", type = tf.type.STR, picks = { "save", "test" } }
     },
     desc = "Log (log.txt) management commands."
 }
@@ -81,6 +81,9 @@ function onEvt.cmd.log(params)
     if params[1] == "save" then
         tf.logSave()
         tf.chatSend("Log saved")
+    elseif params[1] == "test" then
+        tf.logWrite("This is a test log entry.")
+        tf.chatSend("Test log entry created")
     else
         tf.chatSend("Unknown log command!")
     end

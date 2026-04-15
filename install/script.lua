@@ -3,7 +3,7 @@ local osPullEventRawOriginal = os.pullEventRaw
 os.pullEventRaw = function(...)
     local evt = { osPullEventRawOriginal(...) }
     if tf and tf.logWrite then
-        tf.logWrite("test")
+        tf.logWrite(tf.tabToStr(evt))
     end
     return table.unpack(evt)
 end

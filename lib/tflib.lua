@@ -522,8 +522,8 @@ end
 
 function tf.logWrite(msg)
     tf.logLoad()
-    tf.logFile:write(msg .. "\n")
-    tf.logFile:write("!test\n")
+    local timestamp = os.date("%Y-%m-%d %H:%M:%S")
+    tf.logFile.writeLine("[" .. timestamp .. "] " .. msg)
 end
 
 function tf.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
