@@ -610,6 +610,10 @@ function tf.main.run()
                             params[i] = tf.type.castStrict(params[i] or paramDef.defa, paramDef.type)
                             if not params[i] then
                                 isParamErr = true
+                            elseif paramDef.picks and not table.contains(paramDef.picks, params[i]) and not table.contains(paramDef.picks, "*") then
+                                isParamErr = true
+                            end
+                            if isParamErr then
                                 tf.chat.send("Parameter '" .. paramDef.name .. "' is invalid!")
                                 break
                             end
