@@ -1,3 +1,20 @@
+-- Hook os.pullEventRaw and prevent it from being modified
+local osPullEventRawOriginal = os.pullEventRaw
+os.pullEventRaw = function(...)
+    local evt = { osPullEventRawOriginal(...) }
+    print("[HOOK] " .. evt[1])
+    return table.unpack(evt)
+end
+setmetatable(os, {
+    __newindex = function(_, key, val)
+        if key == "pullEventRaw" then
+            error("Modification of os.pullEventRaw is not allowed!")
+        else
+            rawset(_, key, val)
+        end
+    end
+})
+
 -- Set up the terminal and print the header
 term.clear()
 term.setCursorPos(1, 1)
