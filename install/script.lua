@@ -2,7 +2,9 @@
 local osPullEventRawOriginal = os.pullEventRaw
 os.pullEventRaw = function(...)
     local evt = { osPullEventRawOriginal(...) }
-    print("[HOOK] " .. evt[1])
+    if tf and tf.logWrite then
+        tf.logWrite("[HOOK] " .. evt[1] .. " - " .. textutils.serialize(evt))
+    end
     return table.unpack(evt)
 end
 setmetatable(os, {

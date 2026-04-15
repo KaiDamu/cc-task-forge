@@ -71,6 +71,21 @@ function onEvt.cmd.ping()
     tf.chatSend("Online devices: " .. (#pongs + 1))
 end
 
+defDat.cmd.log = {
+    params = {
+        { name = "act", type = tf.type.STR, picks = { "save" } }
+    },
+    desc = "Log (log.txt) management commands."
+}
+function onEvt.cmd.log(params)
+    if params[1] == "save" then
+        tf.logSave()
+        tf.chatSend("Log saved")
+    else
+        tf.chatSend("Unknown log command!")
+    end
+end
+
 defDat.cmd.perilabel = {
     params = {
         { name = "peri_label", type = tf.type.LABEL_EX },

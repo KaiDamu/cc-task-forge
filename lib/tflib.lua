@@ -97,6 +97,7 @@ tf.NMSG_HDR = 47619
 tf.CHAT_SEND_CD = 0.25
 
 tf.cfg = nil
+tf.logFile = nil
 tf.periNet = nil
 tf.pcId = os.getComputerID()
 tf.pcLabel = nil
@@ -502,6 +503,27 @@ end
 
 function tf.cfgLoad()
     tf.cfg = tf.dbLoad("cfg")
+end
+
+function tf.logSave()
+    if tf.logFile then
+        tf.logFile:close()
+        tf.logFile = nil
+    end
+end
+
+function tf.logLoad()
+    if not tf.logFile then
+        tf.logFile = fs.open("log.txt", "a")
+        if not tf.logFile then
+            error("Failed to open log.txt")
+        end
+    end
+end
+
+function tf.logWrite(msg)
+    tf.logLoad()
+    tf.logFile:writeLine(os.date("[%Y-%m-%d %H:%M:%S] ") .. msg)
 end
 
 function tf.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
