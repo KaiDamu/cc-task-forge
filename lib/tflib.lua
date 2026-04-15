@@ -523,7 +523,7 @@ end
 
 function tf.logWrite(msg)
     tf.logLoad()
-    tf.logFile:writeLine(os.date("[%Y-%m-%d %H:%M:%S] ") .. msg)
+    tf.logFile:writeLine(msg)
 end
 
 function tf.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
