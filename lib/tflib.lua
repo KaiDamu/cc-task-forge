@@ -6,7 +6,7 @@ onEvt.sys = onEvt.sys or {}
 onEvt.cmd = onEvt.cmd or {}
 onEvt.msg = onEvt.msg or {}
 
-local tf = {}
+tf = tf or {}
 
 function tf.queueNew()
     return { first = 1, last = 0 }
@@ -661,4 +661,62 @@ function onEvt.msg.reboot(evtParams)
     os.reboot()
 end
 
-return tf
+function tf.main()
+    local initErr = tf.init(tf.pcLabel, tf.pcLabelSub)
+    if initErr then
+        error(initErr)
+    end
+
+    -- Calculate required parameter counts for commands based on their definitions
+    for evtName, evtDef in pairs(defDat.cmd) do
+        local paramReqCnt_ = 0
+        if evtDef.params then
+            for _, param in ipairs(evtDef.params) do
+                if not param.defa then
+                    paramReqCnt_ = paramReqCnt_ + 1
+                end
+            end
+        end
+        defDat.cmd[evtName].paramReqCnt = paramReqCnt_
+    end
+
+    while true do
+        local evt = tf.evtWait()
+        local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
+        local evtTab = onEvt[evtType]
+        if evtTab and type(evtTab[evtName]) == "function" then
+            if evtType == "cmd" then
+                if defDat.cmd[evtName] then
+                    if (#evtParams - 1) >= defDat.cmd[evtName].paramReqCnt then
+                        local params = { table.unpack(evtParams, 2) }
+                        local sender = evtParams[1]
+
+                        local isParamErr = false
+                        for i, paramDef in ipairs(defDat.cmd[evtName].params or {}) do
+                            params[i] = tf.type.castStrict(params[i] or paramDef.defa, paramDef.type)
+                            if not params[i] then
+                                isParamErr = true
+                                tf.chatSend("Parameter '" .. paramDef.name .. "' is invalid!")
+                                break
+                            end
+                        end
+
+                        if isParamErr then
+                            tf.chatSend(tf.cmdHelpStr(evtName))
+                        else
+                            evtTab[evtName](params, sender)
+                        end
+                    else
+                        tf.chatSend(tf.cmdHelpStr(evtName))
+                    end
+                else
+                    tf.chatSend("For command '" .. evtName .. "' there is a handler function but no definition data!")
+                end
+            else
+                evtTab[evtName](evtParams)
+            end
+        end
+    end
+
+    tf.free()
+end

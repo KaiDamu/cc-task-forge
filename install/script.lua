@@ -1,10 +1,7 @@
 -- Hook os.pullEventRaw and prevent it from being modified
 local osPullEventRawOriginal = os.pullEventRaw
-os.pullEventRaw = function(...)
-    local evt = { osPullEventRawOriginal(...) }
-    if tf and tf.logWrite then
-        tf.logWrite(tf.tabToStr(evt))
-    end
+os.pullEventRaw = function(filter)
+    local evt = { osPullEventRawOriginal(filter) }
     return table.unpack(evt)
 end
 setmetatable(os, {
@@ -100,8 +97,8 @@ if downloadOrUseExisting(files[1].url, files[1].path) then
 end
 downloadOrUseExisting(files[2].url, files[2].path)
 
--- Load the tflib library and set it as a global variable
-_G.tf = assert(loadfile(files[2].path))()
+-- Load the main library into the global environment
+assert(loadfile(files[2].path))()
 
 -- Load the configuration and set the PC label from it
 tf.cfgLoad()
@@ -130,66 +127,5 @@ downloadOrUseExisting(files[3].url, files[3].path, true)
 print("\n=== Running " .. tf.pcLabel .. " ===")
 assert(loadfile(files[3].path))()
 
--- Main event loop
-local function main()
-    local initErr = tf.init(tf.pcLabel, tf.pcLabelSub)
-    if initErr then
-        error(initErr)
-    end
-
-    -- Calculate required parameter counts for commands based on their definitions
-    for evtName, evtDef in pairs(defDat.cmd) do
-        local paramReqCnt_ = 0
-        if evtDef.params then
-            for _, param in ipairs(evtDef.params) do
-                if not param.defa then
-                    paramReqCnt_ = paramReqCnt_ + 1
-                end
-            end
-        end
-        defDat.cmd[evtName].paramReqCnt = paramReqCnt_
-    end
-
-    while true do
-        local evt = tf.evtWait()
-        local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
-        local evtTab = onEvt[evtType]
-        if evtTab and type(evtTab[evtName]) == "function" then
-            if evtType == "cmd" then
-                if defDat.cmd[evtName] then
-                    if (#evtParams - 1) >= defDat.cmd[evtName].paramReqCnt then
-                        local params = { table.unpack(evtParams, 2) }
-                        local sender = evtParams[1]
-
-                        local isParamErr = false
-                        for i, paramDef in ipairs(defDat.cmd[evtName].params or {}) do
-                            params[i] = tf.type.castStrict(params[i] or paramDef.defa, paramDef.type)
-                            if not params[i] then
-                                isParamErr = true
-                                tf.chatSend("Parameter '" .. paramDef.name .. "' is invalid!")
-                                break
-                            end
-                        end
-
-                        if isParamErr then
-                            tf.chatSend(tf.cmdHelpStr(evtName))
-                        else
-                            evtTab[evtName](params, sender)
-                        end
-                    else
-                        tf.chatSend(tf.cmdHelpStr(evtName))
-                    end
-                else
-                    tf.chatSend("For command '" .. evtName .. "' there is a handler function but no definition data!")
-                end
-            else
-                evtTab[evtName](evtParams)
-            end
-        end
-    end
-
-    tf.free()
-end
-
 -- Start the main event loop
-main()
+tf.main()
