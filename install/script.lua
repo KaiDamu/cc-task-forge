@@ -3,7 +3,7 @@ local osPullEventRawOriginal = os.pullEventRaw
 os.pullEventRaw = function(...)
     local evt = { osPullEventRawOriginal(...) }
     if tf and tf.logWrite then
-        tf.logWrite("[HOOK] " .. evt[1] .. " - " .. textutils.serialize(evt))
+        tf.logWrite("[HOOK] " .. (tostring(evt[1]) or "") .. " - " .. (tostring(evt[2]) or ""))
     end
     return table.unpack(evt)
 end
