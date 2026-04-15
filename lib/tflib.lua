@@ -507,8 +507,7 @@ end
 
 function tf.logSave()
     if tf.logFile then
-        tf.logFile:close()
-        tf.logFile = nil
+        tf.logFile.flush()
     end
 end
 
@@ -523,7 +522,8 @@ end
 
 function tf.logWrite(msg)
     tf.logLoad()
-    tf.logFile:writeLine(msg)
+    tf.logFile:write(msg .. "\n")
+    tf.logFile:write("!test\n")
 end
 
 function tf.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
