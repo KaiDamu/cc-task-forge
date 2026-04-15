@@ -755,3 +755,12 @@ function tf.cmdHelpStr(cmdName)
     end
     return infoMsg
 end
+
+table.contains = table.contains or function(tab, val)
+    for _, val_ in pairs(tab) do
+        if val_ == val then
+            return true
+        end
+    end
+    return false
+end
