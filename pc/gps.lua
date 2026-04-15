@@ -1,13 +1,13 @@
-function tf.at.msg.gps_pos_req(evtParams)
+function tf.at.msg.gps_pos_req(dat, senderCh)
     if not tf.cfg.dat["pos"] or not tf.cfg.dat["pos"]["x"] or not tf.cfg.dat["pos"]["y"] or not tf.cfg.dat["pos"]["z"] then
         tf.chat.send("My position is not set!")
         return
     end
-    tf.net.send("gps_pos_res", { tf.cfg.dat["pos"]["x"], tf.cfg.dat["pos"]["y"], tf.cfg.dat["pos"]["z"] }, evtParams[1])
+    tf.net.send("gps_pos_res", { tf.cfg.dat["pos"]["x"], tf.cfg.dat["pos"]["y"], tf.cfg.dat["pos"]["z"] }, senderCh)
 end
 
-function tf.at.msg.pos_upd(evtParams)
-    local posX, posY, posZ = evtParams[3], evtParams[4], evtParams[5]
+function tf.at.msg.pos_upd(dat)
+    local posX, posY, posZ = dat[1], dat[2], dat[3]
     if not tf.cfg.dat["pos"] then
         tf.cfg.dat["pos"] = {}
     end

@@ -2,7 +2,7 @@
 ---- ==== SYS ==== ----
 ---- ==== === ==== ----
 
-function tf.at.sys.init(evtParams)
+function tf.at.sys.init()
     tf.periChat = tf.peri.objByType(tf.peri.type.CHAT_BOX)
     if not tf.periChat then
         return "A required Chat Box is not connected!"
@@ -10,7 +10,7 @@ function tf.at.sys.init(evtParams)
     return nil
 end
 
-function tf.at.sys.free(evtParams)
+function tf.at.sys.free()
     tf.periChat = nil
 end
 
@@ -216,18 +216,17 @@ end
 ---- ==== MSG ==== ----
 ---- ==== === ==== ----
 
-function tf.at.msg.chat_send(evtParams)
-    tf.chat.sendAs(evtParams[3], tf.net.chToLabel(evtParams[1], true))
+function tf.at.msg.chat_send(dat, senderCh)
+    tf.chat.sendAs(dat[1], tf.net.chToLabel(senderCh, true))
 end
 
-function tf.at.msg.con_send(evtParams)
-    print("<" .. tf.net.chToLabel(evtParams[1], true) .. "> " .. evtParams[3])
+function tf.at.msg.con_send(dat, senderCh)
+    print("<" .. tf.net.chToLabel(senderCh, true) .. "> " .. dat[1])
 end
 
-function tf.at.msg.pc_init(evtParams)
-    local senderNetCh = evtParams[1]
-    local labelM = tf.pc.labelDatToM(evtParams[3], evtParams[4])
-    tf.net.labelToChCache[labelM] = senderNetCh
-    tf.net.chToLabelCache[senderNetCh] = labelM
-    tf.net.send("pc_accept", {}, senderNetCh)
+function tf.at.msg.pc_init(dat, senderCh)
+    local labelM = tf.pc.labelDatToM(dat[1], dat[2])
+    tf.net.labelToChCache[labelM] = senderCh
+    tf.net.chToLabelCache[senderCh] = labelM
+    tf.net.send("pc_accept", {}, senderCh)
 end

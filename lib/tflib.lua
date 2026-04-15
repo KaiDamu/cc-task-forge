@@ -8,18 +8,18 @@ tf.at = {
     sys = {},
     cmd = {},
     msg = {
-        pc_label_req = function(evtParams)
-            if evtParams[3] then
-                if evtParams[4] ~= tf.pc.label or evtParams[5] ~= tf.pc.labelSub then
+        pc_label_req = function(dat, senderCh)
+            if dat[1] then
+                if dat[2] ~= tf.pc.label or dat[3] ~= tf.pc.labelSub then
                     return
                 end
             end
-            tf.net.send("pc_label_res", { tf.pc.label, tf.pc.labelSub }, evtParams[1])
+            tf.net.send("pc_label_res", { tf.pc.label, tf.pc.labelSub }, senderCh)
         end,
-        ping = function(evtParams)
-            tf.net.send("pong", {}, evtParams[1])
+        ping = function(dat, senderCh)
+            tf.net.send("pong", {}, senderCh)
         end,
-        reboot = function(evtParams)
+        reboot = function()
             os.reboot()
         end
     }
@@ -630,6 +630,10 @@ function tf.main.run()
                 else
                     tf.chat.send("For command '" .. evtName .. "' there is a handler function but no definition data!")
                 end
+            elseif evtType == "msg" then
+                local senderCh, dist = evtParams[1], evtParams[2]
+                local dat = { table.unpack(evtParams, 3) }
+                evtTab[evtName](dat, senderCh, dist)
             else
                 evtTab[evtName](evtParams)
             end

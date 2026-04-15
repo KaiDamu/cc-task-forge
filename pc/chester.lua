@@ -1,4 +1,4 @@
-function tf.at.msg.so(evtParams)
+function tf.at.msg.so(dat)
     local ME_BRIDGE_NAME = "so"
     local meBridge = tf.peri.objByLabel(ME_BRIDGE_NAME)
     if not meBridge then
@@ -6,8 +6,8 @@ function tf.at.msg.so(evtParams)
         return
     end
 
-    if evtParams[3] and evtParams[3]:sub(1, 1) == "/" then
-        if evtParams[3] == "/damaged" then
+    if dat[1] and dat[1]:sub(1, 1) == "/" then
+        if dat[1] == "/damaged" then
             local itemsTab = meBridge.getItems()
             local allCnt = 0
             local outCnt = 0
@@ -22,7 +22,7 @@ function tf.at.msg.so(evtParams)
             else
                 tf.chat.send(outCnt .. " damaged items exported")
             end
-        elseif evtParams[3] == "/enchanted" then
+        elseif dat[1] == "/enchanted" then
             local itemsTab = meBridge.getItems()
             local allCnt = 0
             local outCnt = 0
@@ -39,8 +39,8 @@ function tf.at.msg.so(evtParams)
             end
         end
     else
-        local name_ = evtParams[3] or ""
-        local cnt = tonumber(evtParams[4]) or 1
+        local name_ = dat[1] or ""
+        local cnt = tonumber(dat[2]) or 1
         local outCnt = meBridge.exportItem({ name = name_, count = cnt }, "front")
         if outCnt == cnt then
             tf.chat.send("All items exported")
@@ -52,8 +52,8 @@ function tf.at.msg.so(evtParams)
     end
 end
 
-function tf.at.msg.undress(evtParams)
-    local player = evtParams[3] or "(nameless)"
+function tf.at.msg.undress(dat)
+    local player = dat[1] or "(nameless)"
     local invMgr = tf.peri.objByType(tf.peri.type.INV_MGR, player)
 
     if invMgr then
@@ -80,7 +80,7 @@ function tf.at.msg.undress(evtParams)
     end
 end
 
-function tf.at.msg.disenchant(evtParams)
+function tf.at.msg.disenchant(dat)
     local ME_BRIDGE_NAME = "disenchant"
     local meBridge = tf.peri.objByLabel(ME_BRIDGE_NAME)
     if not meBridge then
@@ -88,7 +88,7 @@ function tf.at.msg.disenchant(evtParams)
         return
     end
 
-    local reqCnt = tonumber(evtParams[3]) or 1
+    local reqCnt = tonumber(dat[1]) or 1
     local curCnt = 0
     local itemsTab = meBridge.getItems()
 
@@ -108,8 +108,8 @@ function tf.at.msg.disenchant(evtParams)
     tf.chat.send("Disenchant export ended")
 end
 
-function tf.at.msg.label_upd(evtParams)
-    local periLabel, periName = evtParams[3], evtParams[4]
+function tf.at.msg.label_upd(dat)
+    local periLabel, periName = dat[1], dat[2]
     if not tf.cfg.dat["labels"] then
         tf.cfg.dat["labels"] = {}
     end
