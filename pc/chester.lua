@@ -1,8 +1,8 @@
-function onEvt.msg.so(evtParams)
+function tf.at.msg.so(evtParams)
     local ME_BRIDGE_NAME = "so"
-    local meBridge = tf.periObjByLabel(ME_BRIDGE_NAME)
+    local meBridge = tf.peri.objByLabel(ME_BRIDGE_NAME)
     if not meBridge then
-        tf.chatSend("ME Bridge with label '" .. ME_BRIDGE_NAME .. "' not found!")
+        tf.chat.send("ME Bridge with label '" .. ME_BRIDGE_NAME .. "' not found!")
         return
     end
 
@@ -18,9 +18,9 @@ function onEvt.msg.so(evtParams)
                 end
             end
             if allCnt == 0 then
-                tf.chatSend("No damaged items found")
+                tf.chat.send("No damaged items found")
             else
-                tf.chatSend(outCnt .. " damaged items exported")
+                tf.chat.send(outCnt .. " damaged items exported")
             end
         elseif evtParams[3] == "/enchanted" then
             local itemsTab = meBridge.getItems()
@@ -33,9 +33,9 @@ function onEvt.msg.so(evtParams)
                 end
             end
             if allCnt == 0 then
-                tf.chatSend("No enchanted items found")
+                tf.chat.send("No enchanted items found")
             else
-                tf.chatSend(outCnt .. " enchanted items exported")
+                tf.chat.send(outCnt .. " enchanted items exported")
             end
         end
     else
@@ -43,18 +43,18 @@ function onEvt.msg.so(evtParams)
         local cnt = tonumber(evtParams[4]) or 1
         local outCnt = meBridge.exportItem({ name = name_, count = cnt }, "front")
         if outCnt == cnt then
-            tf.chatSend("All items exported")
+            tf.chat.send("All items exported")
         elseif outCnt == 0 then
-            tf.chatSend("No items exported!")
+            tf.chat.send("No items exported!")
         else
-            tf.chatSend("Only " .. outCnt .. "/" .. cnt .. " items exported!")
+            tf.chat.send("Only " .. outCnt .. "/" .. cnt .. " items exported!")
         end
     end
 end
 
-function onEvt.msg.undress(evtParams)
+function tf.at.msg.undress(evtParams)
     local player = evtParams[3] or "(nameless)"
-    local invMgr = tf.periObjByType(tf.PERI_TYPE_INV_MGR, player)
+    local invMgr = tf.peri.objByType(tf.peri.type.INV_MGR, player)
 
     if invMgr then
         local wearCnt = 0
@@ -65,26 +65,26 @@ function onEvt.msg.undress(evtParams)
             end
         end
         local removedCnt = 0
-        for _, slot in ipairs(tf.SLOTS_ARMOR) do
+        for _, slot in ipairs(tf.slots.ARMOR) do
             removedCnt = removedCnt + invMgr.removeItemFromPlayer("front", { fromSlot = slot, count = 1 })
         end
         if wearCnt == 0 then
-            tf.chatSend(player .. " is already naked :D")
+            tf.chat.send(player .. " is already naked :D")
         elseif removedCnt ~= wearCnt then
-            tf.chatSend("Failed to undress " .. player .. " -_-")
+            tf.chat.send("Failed to undress " .. player .. " -_-")
         else
-            tf.chatSend("Stripped " .. player .. " :3")
+            tf.chat.send("Stripped " .. player .. " :3")
         end
     else
-        tf.chatSend("Unable to reach " .. player .. "!")
+        tf.chat.send("Unable to reach " .. player .. "!")
     end
 end
 
-function onEvt.msg.disenchant(evtParams)
+function tf.at.msg.disenchant(evtParams)
     local ME_BRIDGE_NAME = "disenchant"
-    local meBridge = tf.periObjByLabel(ME_BRIDGE_NAME)
+    local meBridge = tf.peri.objByLabel(ME_BRIDGE_NAME)
     if not meBridge then
-        tf.chatSend("ME Bridge with label '" .. ME_BRIDGE_NAME .. "' not found!")
+        tf.chat.send("ME Bridge with label '" .. ME_BRIDGE_NAME .. "' not found!")
         return
     end
 
@@ -92,7 +92,7 @@ function onEvt.msg.disenchant(evtParams)
     local curCnt = 0
     local itemsTab = meBridge.getItems()
 
-    tf.chatSend("Disenchant export started...")
+    tf.chat.send("Disenchant export started...")
 
     for key, val in pairs(itemsTab) do
         if val.components["minecraft:enchantments"] then
@@ -105,15 +105,15 @@ function onEvt.msg.disenchant(evtParams)
         end
     end
 
-    tf.chatSend("Disenchant export ended")
+    tf.chat.send("Disenchant export ended")
 end
 
-function onEvt.msg.label_upd(evtParams)
+function tf.at.msg.label_upd(evtParams)
     local periLabel, periName = evtParams[3], evtParams[4]
-    if not tf.cfg["labels"] then
-        tf.cfg["labels"] = {}
+    if not tf.cfg.dat["labels"] then
+        tf.cfg.dat["labels"] = {}
     end
-    tf.cfg["labels"][periLabel] = periName
-    tf.cfgSave()
-    tf.chatSend("Label '" .. periLabel .. "' set to '" .. (periName or "(cleared)") .. "'")
+    tf.cfg.dat["labels"][periLabel] = periName
+    tf.cfg.save()
+    tf.chat.send("Label '" .. periLabel .. "' set to '" .. (periName or "(cleared)") .. "'")
 end

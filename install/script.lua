@@ -101,12 +101,13 @@ downloadOrUseExisting(files[2].url, files[2].path)
 assert(loadfile(files[2].path))()
 
 -- Load the configuration and set the PC label from it
-tf.cfgLoad()
-tf.pcLabelSet(tf.cfg["pc_label"], tf.cfg["pc_label_sub"])
-if not tf.pcLabel or not tf.pcLabelSub then
+tf.cfg.load()
+tf.pc.label = tf.cfg.dat["pc_label"]
+tf.pc.labelSub = tf.cfg.dat["pc_label_sub"]
+if not tf.pc.label or not tf.pc.labelSub then
     print("\n=== Enter a label for this computer: ===")
     local label = read()
-    tf.cfg["pc_label"] = label
+    tf.cfg.dat["pc_label"] = label
     local labelSub = nil
     if label == "main" then
         labelSub = 1
@@ -114,18 +115,19 @@ if not tf.pcLabel or not tf.pcLabelSub then
         print("\n=== Enter " .. label .. " instance number: ===")
         labelSub = tonumber(read()) or 1
     end
-    tf.cfg["pc_label_sub"] = labelSub
-    tf.cfgSave()
-    tf.pcLabelSet(label, labelSub)
+    tf.cfg.dat["pc_label_sub"] = labelSub
+    tf.cfg.save()
+    tf.pc.label = label
+    tf.pc.labelSub = labelSub or 1
 end
 
 -- Determine which computer's code to run based on the label
-files[3] = { url = githubBase .. "pc/" .. tf.pcLabel .. ".lua", path = "pc.lua" }
+files[3] = { url = githubBase .. "pc/" .. tf.pc.label .. ".lua", path = "pc.lua" }
 downloadOrUseExisting(files[3].url, files[3].path, true)
 
 -- Add the computer's code to the global environment
-print("\n=== Running " .. tf.pcLabel .. " ===")
+print("\n=== Running " .. tf.pc.label .. " ===")
 assert(loadfile(files[3].path))()
 
 -- Start the main event loop
-tf.main()
+tf.main.run()

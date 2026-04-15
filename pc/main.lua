@@ -2,15 +2,15 @@
 ---- ==== SYS ==== ----
 ---- ==== === ==== ----
 
-function onEvt.sys.init(evtParams)
-    tf.periChat = tf.periObjByType(tf.PERI_TYPE_CHAT_BOX)
+function tf.at.sys.init(evtParams)
+    tf.periChat = tf.peri.objByType(tf.peri.type.CHAT_BOX)
     if not tf.periChat then
         return "A required Chat Box is not connected!"
     end
     return nil
 end
 
-function onEvt.sys.free(evtParams)
+function tf.at.sys.free(evtParams)
     tf.periChat = nil
 end
 
@@ -18,32 +18,32 @@ end
 ---- ==== CMD ==== ----
 ---- ==== === ==== ----
 
-defDat.cmd.dbg = {
+tf.info.cmd.dbg = {
     desc = "Toggle debug mode (more verbose logging)."
 }
-function onEvt.cmd.dbg()
-    tf.cfg["isDbg"] = not tf.cfg["isDbg"]
-    tf.cfgSave()
-    tf.chatSend("Debug mode " .. (tf.cfg["isDbg"] and "enabled" or "disabled"))
+function tf.at.cmd.dbg()
+    tf.cfg.dat["isDbg"] = not tf.cfg.dat["isDbg"]
+    tf.cfg.save()
+    tf.chat.send("Debug mode " .. (tf.cfg.dat["isDbg"] and "enabled" or "disabled"))
 end
 
-defDat.cmd.reboot = {
+tf.info.cmd.reboot = {
     desc = "Reboot all connected computers (including this one)."
 }
-function onEvt.cmd.reboot()
-    tf.msgSend("reboot", {}, tf.NET_CH_BROADCAST)
-    onEvt.msg.reboot({})
+function tf.at.cmd.reboot()
+    tf.net.send("reboot", {}, tf.net.BROADCAST_CH)
+    tf.at.msg.reboot({})
 end
 
-defDat.cmd.locate = {
+tf.info.cmd.locate = {
     desc = "Locate this computer using GPS."
 }
-function onEvt.cmd.locate()
-    tf.msgSend("gps_pos_req", {}, tf.NET_CH_BROADCAST)
+function tf.at.cmd.locate()
+    tf.net.send("gps_pos_req", {}, tf.net.BROADCAST_CH)
 
-    local posResList = tf.evtWaitForNmsgs("gps_pos_res", 4, 3.0)
+    local posResList = tf.evt.waitForMsgs("gps_pos_res", 4, 3.0)
     if #posResList < 4 then
-        tf.chatSend("Not enough position responses received for trilateration (need 4, got " .. #posResList .. ")")
+        tf.chat.send("Not enough position responses received for trilateration (need 4, got " .. #posResList .. ")")
         return
     end
 
@@ -54,42 +54,42 @@ function onEvt.cmd.locate()
         radii[i] = posResList[i][2]
     end
 
-    local pos = tf.trilaterate4(points[1], radii[1], points[2], radii[2], points[3], radii[3], points[4], radii[4])
+    local pos = tf.math.trilaterate4(points[1], radii[1], points[2], radii[2], points[3], radii[3], points[4], radii[4])
     if pos then
-        tf.chatSend("My position is: " .. pos.x .. ", " .. pos.y .. ", " .. pos.z)
+        tf.chat.send("My position is: " .. pos.x .. ", " .. pos.y .. ", " .. pos.z)
     else
-        tf.chatSend("Failed to trilaterate position - no solution found")
+        tf.chat.send("Failed to trilaterate position - no solution found")
     end
 end
 
-defDat.cmd.ping = {
+tf.info.cmd.ping = {
     desc = "Ping all connected computers to see who's online."
 }
-function onEvt.cmd.ping()
-    tf.msgSend("ping", {}, tf.NET_CH_BROADCAST)
-    local pongs = tf.evtWaitForNmsgs("pong", tf.HUGE, 1.5)
-    tf.chatSend("Online devices: " .. (#pongs + 1))
+function tf.at.cmd.ping()
+    tf.net.send("ping", {}, tf.net.BROADCAST_CH)
+    local pongs = tf.evt.waitForMsgs("pong", tf.math.HUGE, 1.5)
+    tf.chat.send("Online devices: " .. (#pongs + 1))
 end
 
-defDat.cmd.log = {
+tf.info.cmd.log = {
     params = {
         { name = "act", type = tf.type.STR, picks = { "save", "test" } }
     },
     desc = "Log (log.txt) management commands."
 }
-function onEvt.cmd.log(params)
+function tf.at.cmd.log(params)
     if params[1] == "save" then
-        tf.logSave()
-        tf.chatSend("Log saved")
+        tf.log.save()
+        tf.chat.send("Log saved")
     elseif params[1] == "test" then
-        tf.logWrite("This is a test log entry.")
-        tf.chatSend("Test log entry created")
+        tf.log.write("This is a test log entry.")
+        tf.chat.send("Test log entry created")
     else
-        tf.chatSend("Unknown log command!")
+        tf.chat.send("Unknown log command!")
     end
 end
 
-defDat.cmd.perilabel = {
+tf.info.cmd.perilabel = {
     params = {
         { name = "peri_label", type = tf.type.LABEL_EX },
         { name = "peri_name",  type = tf.type.STR,     picks = { "*", "clear" }, defa = "" }
@@ -97,14 +97,14 @@ defDat.cmd.perilabel = {
     desc = "Link a peripheral name to a computer's peripheral label (or clear it). Or get the linked peripheral name.",
     examples = { "perilabel chester:so me_bridge_3" }
 }
-function onEvt.cmd.perilabel(params)
+function tf.at.cmd.perilabel(params)
     local pcLabel, pcLabelSub, periLabel = params[1][1], params[1][2], params[1][3]
     local periName = params[2]
-    local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
-    tf.msgSend("label_upd", { periLabel, periName }, netCh)
+    local netCh = tf.net.labelToCh(tf.pc.labelDatToM(pcLabel, pcLabelSub))
+    tf.net.send("label_upd", { periLabel, periName }, netCh)
 end
 
-defDat.cmd.posdef = {
+tf.info.cmd.posdef = {
     params = {
         { name = "pc", type = tf.type.LABEL_M },
         { name = "x",  type = tf.type.INT },
@@ -113,14 +113,14 @@ defDat.cmd.posdef = {
     },
     desc = "Define a computer's position in the world (for example, for GPS)."
 }
-function onEvt.cmd.posdef(params)
+function tf.at.cmd.posdef(params)
     local pcLabel, pcLabelSub = params[1][1], params[1][2]
     local posX, posY, posZ = params[2], params[3], params[4]
-    local netCh = tf.pcLabelMToNetCh(tf.labelDatTolabelM(pcLabel, pcLabelSub))
-    tf.msgSend("pos_upd", { posX, posY, posZ }, netCh)
+    local netCh = tf.net.labelToCh(tf.pc.labelDatToM(pcLabel, pcLabelSub))
+    tf.net.send("pos_upd", { posX, posY, posZ }, netCh)
 end
 
-defDat.cmd.so = {
+tf.info.cmd.so = {
     params = {
         { name = "filter", type = tf.type.STR, picks = { "*", "/damaged", "/enchanted" } },
         { name = "cnt",    type = tf.type.INT, defa = 1 }
@@ -128,32 +128,32 @@ defDat.cmd.so = {
     desc = "Export items using the default storage output peripheral. Optionally filter and specify count.",
     examples = { "so diamond_sword 3" }
 }
-function onEvt.cmd.so(params)
-    tf.msgSend("so", { params[1], params[2] })
+function tf.at.cmd.so(params)
+    tf.net.send("so", { params[1], params[2] })
 end
 
-defDat.cmd.undress = {
+tf.info.cmd.undress = {
     params = {
         { name = "player", type = tf.type.STR }
     },
     desc = "Undress an unlucky player by taking all their armor.",
     examples = { "undress KaiDamu" }
 }
-function onEvt.cmd.undress(params)
-    tf.msgSend("undress", { params[1] })
+function tf.at.cmd.undress(params)
+    tf.net.send("undress", { params[1] })
 end
 
-defDat.cmd.disenchant = {
+tf.info.cmd.disenchant = {
     params = {
         { name = "cnt", type = tf.type.INT }
     },
     desc = "Export items with enchantments (together with books) to the disenchanting inventory."
 }
-function onEvt.cmd.disenchant(params)
-    tf.msgSend("disenchant", { params[1] })
+function tf.at.cmd.disenchant(params)
+    tf.net.send("disenchant", { params[1] })
 end
 
-defDat.cmd.random = {
+tf.info.cmd.random = {
     params = {
         { name = "mode", type = tf.type.STR, picks = { "color" } },
         { name = "cnt",  type = tf.type.INT, defa = 1 }
@@ -161,7 +161,7 @@ defDat.cmd.random = {
     desc = "Generate random data. Mode specifies what kind of data, with optional count parameter.",
     examples = { "random color 3" }
 }
-function onEvt.cmd.random(params)
+function tf.at.cmd.random(params)
     if params[1] == "color" then
         local cnt = params[2]
         local COLORS = {
@@ -173,42 +173,42 @@ function onEvt.cmd.random(params)
             local color = COLORS[math.random(1, #COLORS)]
             result = result .. " " .. color
         end
-        tf.chatSend(result)
+        tf.chat.send(result)
     else
-        tf.chatSend("Unknown mode!")
+        tf.chat.send("Unknown mode!")
     end
 end
 
-defDat.cmd.hello = {
+tf.info.cmd.hello = {
     desc = "Just say hi to the sender."
 }
-function onEvt.cmd.hello(params, sender)
-    tf.chatSend("Hi " .. sender .. "!")
+function tf.at.cmd.hello(params, sender)
+    tf.chat.send("Hi " .. sender .. "!")
 end
 
-defDat.cmd.help = {
+tf.info.cmd.help = {
     params = {
         { name = "mode", type = tf.type.STR, picks = { "list", "cmd" } },
         { name = "name", type = tf.type.STR, defa = "" }
     },
     desc = "Get help: With 'list' mode, list all commands. With 'cmd' mode, get detailed info about a specific command."
 }
-function onEvt.cmd.help(params)
+function tf.at.cmd.help(params)
     if params[1] == "cmd" then
-        tf.chatSend(tf.cmdHelpStr(params[2]))
+        tf.chat.send(tf.cmdHelpStr(params[2]))
     elseif params[1] == "list" then
         local cmdList = "Commands:"
         local sortedCmds = {}
-        for cmdName, _ in pairs(defDat.cmd) do
+        for cmdName, _ in pairs(tf.info.cmd) do
             table.insert(sortedCmds, cmdName)
         end
         table.sort(sortedCmds)
         for _, cmdName in ipairs(sortedCmds) do
             cmdList = cmdList .. " " .. cmdName
         end
-        tf.chatSend(cmdList)
+        tf.chat.send(cmdList)
     else
-        tf.chatSend("Unknown help mode!")
+        tf.chat.send("Unknown help mode!")
     end
 end
 
@@ -216,18 +216,18 @@ end
 ---- ==== MSG ==== ----
 ---- ==== === ==== ----
 
-function onEvt.msg.chat_send(evtParams)
-    tf.chatSendAs(evtParams[3], tf.pcNetChToLabelM(evtParams[1], true))
+function tf.at.msg.chat_send(evtParams)
+    tf.chat.sendAs(evtParams[3], tf.net.chToLabel(evtParams[1], true))
 end
 
-function onEvt.msg.con_send(evtParams)
-    print("<" .. tf.pcNetChToLabelM(evtParams[1], true) .. "> " .. evtParams[3])
+function tf.at.msg.con_send(evtParams)
+    print("<" .. tf.net.chToLabel(evtParams[1], true) .. "> " .. evtParams[3])
 end
 
-function onEvt.msg.pc_init(evtParams)
+function tf.at.msg.pc_init(evtParams)
     local senderNetCh = evtParams[1]
-    local labelM = tf.labelDatTolabelM(evtParams[3], evtParams[4])
-    tf.pcLabelMToNetChTab[labelM] = senderNetCh
-    tf.pcNetChToLabelMTab[senderNetCh] = labelM
-    tf.msgSend("pc_accept", {}, senderNetCh)
+    local labelM = tf.pc.labelDatToM(evtParams[3], evtParams[4])
+    tf.net.labelToChCache[labelM] = senderNetCh
+    tf.net.chToLabelCache[senderNetCh] = labelM
+    tf.net.send("pc_accept", {}, senderNetCh)
 end
