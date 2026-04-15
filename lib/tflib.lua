@@ -16,8 +16,8 @@ tf.at = {
             end
             tf.net.send("pc_label_res", { tf.pc.label, tf.pc.labelSub }, senderCh)
         end,
-        ping = function(dat, senderCh)
-            tf.net.send("pong", {}, senderCh)
+        ping_req = function(dat, senderCh)
+            tf.net.send("ping_res", {}, senderCh)
         end,
         reboot = function()
             os.reboot()
@@ -172,11 +172,11 @@ function tf.peri.objByType(type_, which)
 end
 
 function tf.peri.objByLabel(label)
-    if not tf.cfg.dat["labels"] then
-        tf.cfg.dat["labels"] = {}
+    if not tf.cfg.dat["peri_labels"] then
+        tf.cfg.dat["peri_labels"] = {}
         tf.cfg.save()
     end
-    return tf.peri.objByName(tf.cfg.dat["labels"][label])
+    return tf.peri.objByName(tf.cfg.dat["peri_labels"][label])
 end
 
 function tf.peri.objFind(label, type_, which, name)
@@ -581,17 +581,17 @@ function tf.main.run()
         error(initErr)
     end
 
-    -- Calculate required parameter counts for commands based on their definitions
+    -- Calculate required argument counts for commands based on their definitions
     for evtName, evtDef in pairs(tf.info.cmd) do
-        local paramReqCnt_ = 0
-        if evtDef.params then
-            for _, param in ipairs(evtDef.params) do
-                if not param.defa then
-                    paramReqCnt_ = paramReqCnt_ + 1
+        local argReqCnt_ = 0
+        if evtDef.args then
+            for _, arg in ipairs(evtDef.args) do
+                if not arg.defa then
+                    argReqCnt_ = argReqCnt_ + 1
                 end
             end
         end
-        tf.info.cmd[evtName].paramReqCnt = paramReqCnt_
+        tf.info.cmd[evtName].argReqCnt = argReqCnt_
     end
 
     while true do
@@ -601,28 +601,28 @@ function tf.main.run()
         if evtTab and type(evtTab[evtName]) == "function" then
             if evtType == "cmd" then
                 if tf.info.cmd[evtName] then
-                    if (#evtParams - 1) >= tf.info.cmd[evtName].paramReqCnt then
-                        local params = { table.unpack(evtParams, 2) }
+                    if (#evtParams - 1) >= tf.info.cmd[evtName].argReqCnt then
+                        local args = { table.unpack(evtParams, 2) }
                         local sender = evtParams[1]
 
-                        local isParamErr = false
-                        for i, paramDef in ipairs(tf.info.cmd[evtName].params or {}) do
-                            params[i] = tf.type.castStrict(params[i] or paramDef.defa, paramDef.type)
-                            if not params[i] then
-                                isParamErr = true
-                            elseif paramDef.picks and not table.contains(paramDef.picks, params[i]) and not table.contains(paramDef.picks, "*") then
-                                isParamErr = true
+                        local isArgErr = false
+                        for i, argDef in ipairs(tf.info.cmd[evtName].args or {}) do
+                            args[i] = tf.type.castStrict(args[i] or argDef.defa, argDef.type)
+                            if not args[i] then
+                                isArgErr = true
+                            elseif argDef.picks and not table.contains(argDef.picks, args[i]) and not table.contains(argDef.picks, "*") then
+                                isArgErr = true
                             end
-                            if isParamErr then
-                                tf.chat.send("Parameter '" .. paramDef.name .. "' is invalid!")
+                            if isArgErr then
+                                tf.chat.send("Parameter named '" .. argDef.name .. "' is invalid!")
                                 break
                             end
                         end
 
-                        if isParamErr then
+                        if isArgErr then
                             tf.chat.send(tf.cmdHelpStr(evtName))
                         else
-                            evtTab[evtName](params, sender)
+                            evtTab[evtName](args, sender)
                         end
                     else
                         tf.chat.send(tf.cmdHelpStr(evtName))
@@ -735,18 +735,18 @@ function tf.cmdHelpStr(cmdName)
         return "No help available for unknown command '" .. cmdName .. "'!"
     end
     local infoMsg = "Usage: " .. cmdName
-    if tf.info.cmd[cmdName].params then
-        for _, param in ipairs(tf.info.cmd[cmdName].params) do
+    if tf.info.cmd[cmdName].args then
+        for _, arg in ipairs(tf.info.cmd[cmdName].args) do
             local enclose = { " <", ">" }
-            if param.defa then
+            if arg.defa then
                 enclose = { " [", "]" }
             end
-            infoMsg = infoMsg .. enclose[1] .. param.name .. ": " .. tf.type.toStr[param.type]
-            if param.picks then
-                infoMsg = infoMsg .. " (" .. table.concat(param.picks, " | ") .. ")"
+            infoMsg = infoMsg .. enclose[1] .. arg.name .. ": " .. tf.type.toStr[arg.type]
+            if arg.picks then
+                infoMsg = infoMsg .. " (" .. table.concat(arg.picks, " | ") .. ")"
             end
-            if param.defa and param.defa ~= "" then
-                infoMsg = infoMsg .. " =" .. tostring(param.defa)
+            if arg.defa and arg.defa ~= "" then
+                infoMsg = infoMsg .. " =" .. tostring(arg.defa)
             end
             infoMsg = infoMsg .. enclose[2]
         end

@@ -66,22 +66,22 @@ tf.info.cmd.ping = {
     desc = "Ping all connected computers to see who's online."
 }
 function tf.at.cmd.ping()
-    tf.net.send("ping", {}, tf.net.BROADCAST_CH)
-    local pongs = tf.evt.waitForMsgs("pong", tf.math.HUGE, 1.5)
+    tf.net.send("ping_req", {}, tf.net.BROADCAST_CH)
+    local pongs = tf.evt.waitForMsgs("ping_res", tf.math.HUGE, 1.5)
     tf.chat.send("Online devices: " .. (#pongs + 1))
 end
 
 tf.info.cmd.log = {
-    params = {
+    args = {
         { name = "act", type = tf.type.STR, picks = { "save", "test" } }
     },
     desc = "Log (log.txt) management commands."
 }
-function tf.at.cmd.log(params)
-    if params[1] == "save" then
+function tf.at.cmd.log(args)
+    if args[1] == "save" then
         tf.log.save()
         tf.chat.send("Log saved")
-    elseif params[1] == "test" then
+    elseif args[1] == "test" then
         tf.log.write("This is a test log entry.")
         tf.chat.send("Test log entry created")
     else
@@ -90,22 +90,22 @@ function tf.at.cmd.log(params)
 end
 
 tf.info.cmd.perilabel = {
-    params = {
+    args = {
         { name = "peri_label", type = tf.type.LABEL_EX },
         { name = "peri_name",  type = tf.type.STR,     picks = { "*", "clear" }, defa = "" }
     },
     desc = "Link a peripheral name to a computer's peripheral label (or clear it). Or get the linked peripheral name.",
     examples = { "perilabel chester:so me_bridge_3" }
 }
-function tf.at.cmd.perilabel(params)
-    local pcLabel, pcLabelSub, periLabel = params[1][1], params[1][2], params[1][3]
-    local periName = params[2]
+function tf.at.cmd.perilabel(args)
+    local pcLabel, pcLabelSub, periLabel = args[1][1], args[1][2], args[1][3]
+    local periName = args[2]
     local netCh = tf.net.labelToCh(tf.pc.labelDatToM(pcLabel, pcLabelSub))
-    tf.net.send("label_upd", { periLabel, periName }, netCh)
+    tf.net.send("cfg_peri_label", { periLabel, periName }, netCh)
 end
 
 tf.info.cmd.posdef = {
-    params = {
+    args = {
         { name = "pc", type = tf.type.LABEL_M },
         { name = "x",  type = tf.type.INT },
         { name = "y",  type = tf.type.INT },
@@ -113,57 +113,24 @@ tf.info.cmd.posdef = {
     },
     desc = "Define a computer's position in the world (for example, for GPS)."
 }
-function tf.at.cmd.posdef(params)
-    local pcLabel, pcLabelSub = params[1][1], params[1][2]
-    local posX, posY, posZ = params[2], params[3], params[4]
+function tf.at.cmd.posdef(args)
+    local pcLabel, pcLabelSub = args[1][1], args[1][2]
+    local posX, posY, posZ = args[2], args[3], args[4]
     local netCh = tf.net.labelToCh(tf.pc.labelDatToM(pcLabel, pcLabelSub))
-    tf.net.send("pos_upd", { posX, posY, posZ }, netCh)
-end
-
-tf.info.cmd.so = {
-    params = {
-        { name = "filter", type = tf.type.STR, picks = { "*", "/damaged", "/enchanted" } },
-        { name = "cnt",    type = tf.type.INT, defa = 1 }
-    },
-    desc = "Export items using the default storage output peripheral. Optionally filter and specify count.",
-    examples = { "so diamond_sword 3" }
-}
-function tf.at.cmd.so(params)
-    tf.net.send("so", { params[1], params[2] })
-end
-
-tf.info.cmd.undress = {
-    params = {
-        { name = "player", type = tf.type.STR }
-    },
-    desc = "Undress an unlucky player by taking all their armor.",
-    examples = { "undress KaiDamu" }
-}
-function tf.at.cmd.undress(params)
-    tf.net.send("undress", { params[1] })
-end
-
-tf.info.cmd.disenchant = {
-    params = {
-        { name = "cnt", type = tf.type.INT }
-    },
-    desc = "Export items with enchantments (together with books) to the disenchanting inventory."
-}
-function tf.at.cmd.disenchant(params)
-    tf.net.send("disenchant", { params[1] })
+    tf.net.send("cfg_pos", { posX, posY, posZ }, netCh)
 end
 
 tf.info.cmd.random = {
-    params = {
+    args = {
         { name = "mode", type = tf.type.STR, picks = { "color" } },
         { name = "cnt",  type = tf.type.INT, defa = 1 }
     },
     desc = "Generate random data. Mode specifies what kind of data, with optional count parameter.",
     examples = { "random color 3" }
 }
-function tf.at.cmd.random(params)
-    if params[1] == "color" then
-        local cnt = params[2]
+function tf.at.cmd.random(args)
+    if args[1] == "color" then
+        local cnt = args[2]
         local COLORS = {
             "black", "red", "green", "brown", "blue", "purple", "cyan", "light_gray", "gray", "pink", "lime", "yellow",
             "light_blue", "magenta", "orange", "white"
@@ -182,21 +149,21 @@ end
 tf.info.cmd.hello = {
     desc = "Just say hi to the sender."
 }
-function tf.at.cmd.hello(params, sender)
+function tf.at.cmd.hello(args, sender)
     tf.chat.send("Hi " .. sender .. "!")
 end
 
 tf.info.cmd.help = {
-    params = {
+    args = {
         { name = "mode", type = tf.type.STR, picks = { "list", "cmd" } },
         { name = "name", type = tf.type.STR, defa = "" }
     },
     desc = "Get help: With 'list' mode, list all commands. With 'cmd' mode, get detailed info about a specific command."
 }
-function tf.at.cmd.help(params)
-    if params[1] == "cmd" then
-        tf.chat.send(tf.cmdHelpStr(params[2]))
-    elseif params[1] == "list" then
+function tf.at.cmd.help(args)
+    if args[1] == "cmd" then
+        tf.chat.send(tf.cmdHelpStr(args[2]))
+    elseif args[1] == "list" then
         local cmdList = "Commands:"
         local sortedCmds = {}
         for cmdName, _ in pairs(tf.info.cmd) do

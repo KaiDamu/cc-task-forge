@@ -6,7 +6,7 @@ function tf.at.msg.gps_pos_req(dat, senderCh)
     tf.net.send("gps_pos_res", { tf.cfg.dat["pos"]["x"], tf.cfg.dat["pos"]["y"], tf.cfg.dat["pos"]["z"] }, senderCh)
 end
 
-function tf.at.msg.pos_upd(dat)
+function tf.at.msg.cfg_pos(dat)
     local posX, posY, posZ = dat[1], dat[2], dat[3]
     if not tf.cfg.dat["pos"] then
         tf.cfg.dat["pos"] = {}
