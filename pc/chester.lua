@@ -60,6 +60,7 @@ function tf.at.cmd.so(args)
     end
 end
 
+--[[
 tf.info.cmd.undress = {
     args = {
         { name = "player", type = tf.type.STR }
@@ -94,6 +95,7 @@ function tf.at.cmd.undress(args)
         tf.chat.send("Unable to reach " .. player .. "!")
     end
 end
+]]--
 
 tf.info.cmd.disenchant = {
     args = {
