@@ -1,3 +1,10 @@
+tf.info.cmd.hello = {
+    desc = "Just say hi to the sender."
+}
+function tf.at.cmd.hello(args, sender)
+    tf.chat.send("Hi " .. sender .. "!")
+end
+
 function tf.at.msg.gps_pos_req(dat, senderCh)
     if not tf.cfg.dat["pos"] or not tf.cfg.dat["pos"]["x"] or not tf.cfg.dat["pos"]["y"] or not tf.cfg.dat["pos"]["z"] then
         tf.chat.send("My position is not set!")

@@ -187,15 +187,43 @@ end
 
 function tf.at.msg.cmds_register(dat, senderCh)
     for cmdName, cmdDef in pairs(dat[1]) do
-        if not tf.info.cmd[cmdName] then
+        if tf.info.cmd[cmdName] then
+            if table.isSame(tf.info.cmd[cmdName].args, cmdDef.args) and table.isSame(tf.info.cmd[cmdName].desc, cmdDef.desc) then
+                local isChIncluded = false
+                for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
+                    if ch == senderCh then
+                        isChIncluded = true
+                        break
+                    end
+                end
+                if not isChIncluded then
+                    table.insert(tf.info.cmd[cmdName].senderChs, senderCh)
+                end
+            else
+                tf.chat.send("'" ..
+                    tf.net.chToLabel(senderCh, true) ..
+                    "' tried to redefine existing command '" .. cmdName .. "'! Ignoring this new definition...")
+            end
+        else
             tf.info.cmd[cmdName] = cmdDef
+            tf.info.cmd[cmdName].senderChs = { senderCh }
             tf.at.cmd[cmdName] = function(args, sender, cmdName)
-                tf.net.send("cmd_run_req", { args, sender, cmdName }, senderCh)
-                local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", 1, tf.time.WAIT_STD)
-                if #cmdRunRes ~= 1 then
-                    tf.info.cmd[cmdName] = nil
-                    tf.at.cmd[cmdName] = nil
-                    tf.chat.send("Command '" .. cmdName .. "' is no longer available!")
+                for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
+                    tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                end
+                local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", #tf.info.cmd[cmdName].senderChs, tf.time.WAIT_STD)
+                if #cmdRunRes ~= #tf.info.cmd[cmdName].senderChs then
+                    tf.info.cmd[cmdName].senderChs = {}
+                    for _, res in ipairs(cmdRunRes) do
+                        table.insert(tf.info.cmd[cmdName].senderChs, res[1])
+                    end
+                    if #tf.info.cmd[cmdName].senderChs == 0 then
+                        tf.info.cmd[cmdName] = nil
+                        tf.at.cmd[cmdName] = nil
+                        tf.chat.send("Command '" .. cmdName .. "' is no longer available!")
+                    else
+                        tf.chat.send("Command '" .. cmdName .. "' was ran by less computers than expected!")
+                    end
                 end
             end
         end
