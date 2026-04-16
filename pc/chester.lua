@@ -129,6 +129,13 @@ function tf.at.cmd.disenchant(args)
     tf.chat.send("Disenchant export ended")
 end
 
+tf.info.cmd.hello = {
+    desc = "Just say hi to the sender."
+}
+function tf.at.cmd.hello(args, sender)
+    tf.chat.send("Hi " .. sender .. "!")
+end
+
 function tf.at.msg.cfg_peri_label(dat)
     local periLabel, periName = dat[1], dat[2]
     if not tf.cfg.dat["peri_labels"] then

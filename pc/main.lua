@@ -41,7 +41,7 @@ tf.info.cmd.locate = {
 function tf.at.cmd.locate()
     tf.net.send("gps_pos_req", {}, tf.net.BROADCAST_CH)
 
-    local posResList = tf.evt.waitForMsgs("gps_pos_res", 4, 3.0)
+    local posResList = tf.evt.waitForMsgs("gps_pos_res", 4, tf.time.WAIT_STD)
     if #posResList < 4 then
         tf.chat.send("Not enough position responses received for trilateration (need 4, got " .. #posResList .. ")")
         return
@@ -67,7 +67,7 @@ tf.info.cmd.ping = {
 }
 function tf.at.cmd.ping()
     tf.net.send("ping_req", {}, tf.net.BROADCAST_CH)
-    local pongs = tf.evt.waitForMsgs("ping_res", tf.math.HUGE, 1.5)
+    local pongs = tf.evt.waitForMsgs("ping_res", tf.math.HUGE, tf.time.WAIT_STD)
     tf.chat.send("Online devices: " .. (#pongs + 1))
 end
 
@@ -146,13 +146,6 @@ function tf.at.cmd.random(args)
     end
 end
 
-tf.info.cmd.hello = {
-    desc = "Just say hi to the sender."
-}
-function tf.at.cmd.hello(args, sender)
-    tf.chat.send("Hi " .. sender .. "!")
-end
-
 tf.info.cmd.help = {
     args = {
         { name = "mode", type = tf.type.STR, picks = { "list", "cmd" } },
@@ -196,4 +189,13 @@ function tf.at.msg.pc_init(dat, senderCh)
     tf.net.labelToChCache[labelM] = senderCh
     tf.net.chToLabelCache[senderCh] = labelM
     tf.net.send("pc_accept", {}, senderCh)
+end
+
+function tf.at.msg.cmds_register(dat, senderCh)
+    for cmdName, cmdDef in pairs(dat[1]) do
+        if not tf.info.cmd[cmdName] then
+            tf.info.cmd[cmdName] = cmdDef
+            tf.info.cmd[cmdName].senderCh = senderCh
+        end
+    end
 end

@@ -106,7 +106,7 @@ tf.pc.label = tf.cfg.dat["pc_label"]
 tf.pc.labelSub = tf.cfg.dat["pc_label_sub"]
 if not tf.pc.label or not tf.pc.labelSub then
     print("\n=== Enter a label for this computer: ===")
-    local label = read()
+    local label = tf.str.toSnake(read())
     tf.cfg.dat["pc_label"] = label
     local labelSub = nil
     if label == "main" then

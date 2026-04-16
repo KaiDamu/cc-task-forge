@@ -19,6 +19,9 @@ tf.at = {
         ping_req = function(dat, senderCh)
             tf.net.send("ping_res", {}, senderCh)
         end,
+        cmd_run = function(dat)
+            tf.at.cmd[dat[1]](dat[2], dat[3])
+        end,
         reboot = function()
             os.reboot()
         end
@@ -514,7 +517,10 @@ function tf.math.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
     end
 end
 
-tf.time = {}
+tf.time = {
+    WAIT_STD = 1.5,
+    WAIT_BROADCAST = 5.0
+}
 
 function tf.time.game()
     return os.epoch("ingame") / 1000.0
@@ -543,18 +549,19 @@ function tf.main.init(label, labelSub)
     if tf.pc.label == "main" then
         tf.net.mainCh = tf.pc.netCh
     else
-        local pcAccept = tf.evt.waitForMsgs("pc_accept", 1, 1.5)[1]
+        local pcAccept = tf.evt.waitForMsgs("pc_accept", 1, tf.time.WAIT_STD)[1]
         if not pcAccept then
             print("Waiting for main to accept connection...")
         end
         while not pcAccept do
             tf.net.send("pc_init", { tf.pc.label, tf.pc.labelSub }, tf.net.BROADCAST_CH)
-            pcAccept = tf.evt.waitForMsgs("pc_accept", 1, 5.0)[1]
+            pcAccept = tf.evt.waitForMsgs("pc_accept", 1, tf.time.WAIT_BROADCAST)[1]
         end
         tf.net.mainCh = pcAccept[1]
+        tf.net.send("cmds_register", { tf.info.cmd }, tf.net.mainCh)
     end
 
-    tf.con.writeCol(name .. " #" .. tf.pc.labelSub .. " online!", colors.green)
+    tf.con.writeCol(tf.str.toTitle(tf.pc.labelDatToM(tf.pc.label, tf.pc.labelSub)) .. " online!", colors.green)
 
     if tf.at.sys.init then
         local sysInitResult = tf.at.sys.init({})
@@ -598,46 +605,55 @@ function tf.main.run()
         local evt = tf.evt.wait()
         local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
         local evtTab = tf.at[evtType]
-        if evtTab and type(evtTab[evtName]) == "function" then
-            if evtType == "cmd" then
-                if tf.info.cmd[evtName] then
-                    if (#evtParams - 1) >= tf.info.cmd[evtName].argReqCnt then
-                        local args = { table.unpack(evtParams, 2) }
-                        local sender = evtParams[1]
+        if not evtTab then
+            goto next_evt
+        end
+        local evtHasFn = type(evtTab[evtName]) == "function"
+        if evtType == "cmd" then
+            if tf.info.cmd[evtName] then
+                if (#evtParams - 1) >= tf.info.cmd[evtName].argReqCnt then
+                    local args = { table.unpack(evtParams, 2) }
+                    local sender = evtParams[1]
 
-                        local isArgErr = false
-                        for i, argDef in ipairs(tf.info.cmd[evtName].args or {}) do
-                            args[i] = tf.type.castStrict(args[i] or argDef.defa, argDef.type)
-                            if not args[i] then
-                                isArgErr = true
-                            elseif argDef.picks and not table.contains(argDef.picks, args[i]) and not table.contains(argDef.picks, "*") then
-                                isArgErr = true
-                            end
-                            if isArgErr then
-                                tf.chat.send("Parameter named '" .. argDef.name .. "' is invalid!")
-                                break
-                            end
+                    local isArgErr = false
+                    for i, argDef in ipairs(tf.info.cmd[evtName].args or {}) do
+                        args[i] = tf.type.castStrict(args[i] or argDef.defa, argDef.type)
+                        if not args[i] then
+                            isArgErr = true
+                        elseif argDef.picks and not table.contains(argDef.picks, args[i]) and not table.contains(argDef.picks, "*") then
+                            isArgErr = true
                         end
-
                         if isArgErr then
-                            tf.chat.send(tf.cmdHelpStr(evtName))
-                        else
-                            evtTab[evtName](args, sender)
+                            tf.chat.send("Parameter named '" .. argDef.name .. "' is invalid!")
+                            break
                         end
-                    else
+                    end
+
+                    if isArgErr then
                         tf.chat.send(tf.cmdHelpStr(evtName))
+                    elseif tf.info.cmd[evtName].senderCh then
+                        tf.net.send("cmd_run", { evtName, args, sender }, tf.info.cmd[evtName].senderCh)
+                    elseif evtHasFn then
+                        evtTab[evtName](args, sender)
+                    else
+                        tf.chat.send("Command '" .. evtName .. "' is not implemented yet!")
                     end
                 else
-                    tf.chat.send("For command '" .. evtName .. "' there is a handler function but no definition data!")
+                    tf.chat.send(tf.cmdHelpStr(evtName))
                 end
-            elseif evtType == "msg" then
-                local senderCh, dist = evtParams[1], evtParams[2]
-                local dat = { table.unpack(evtParams, 3) }
-                evtTab[evtName](dat, senderCh, dist)
             else
-                evtTab[evtName](evtParams)
+                tf.chat.send("For command '" ..
+                    evtName .. "' there is a handler (.at) function but no definition (.info)!")
             end
+        elseif evtType == "msg" and evtHasFn then
+            local senderCh, dist = evtParams[1], evtParams[2]
+            local dat = { table.unpack(evtParams, 3) }
+            evtTab[evtName](dat, senderCh, dist)
+        elseif evtHasFn then
+            evtTab[evtName](evtParams)
+        else
         end
+        ::next_evt::
     end
 
     tf.main.free()
