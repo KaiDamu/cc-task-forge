@@ -213,7 +213,7 @@ function tf.at.msg.cmds_register(dat, senderCh)
             tf.at.cmd[cmdName] = function(args, sender, cmdName)
                 if tf.info.cmd[cmdName].dstArgI then
                     local dstArg = args[tf.info.cmd[cmdName].dstArgI]
-                    local ch = tf.net.labelToCh(dstArg)
+                    local ch = tf.net.labelToCh(tf.pc.labelDatToM(dstArg[1], dstArg[2]))
                     tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
                 else
                     for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
