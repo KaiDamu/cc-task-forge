@@ -84,8 +84,6 @@ function tf.at.cmd.log(args)
     elseif args[1] == "test" then
         tf.log.write("This is a test log entry.")
         tf.chat.send("Test log entry created")
-    else
-        tf.chat.send("Unknown log command!")
     end
 end
 
@@ -141,8 +139,6 @@ function tf.at.cmd.random(args)
             result = result .. " " .. color
         end
         tf.chat.send(result)
-    else
-        tf.chat.send("Unknown mode!")
     end
 end
 
@@ -167,8 +163,6 @@ function tf.at.cmd.help(args)
             cmdList = cmdList .. " " .. cmdName
         end
         tf.chat.send(cmdList)
-    else
-        tf.chat.send("Unknown help mode!")
     end
 end
 

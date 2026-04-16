@@ -545,6 +545,19 @@ function tf.main.init(label, labelSub)
     tf.pc.labelSub = labelSub or 1
     tf.pc.name = name
 
+    -- Calculate required argument counts for commands based on their definitions
+    for evtName, evtDef in pairs(tf.info.cmd) do
+        local argReqCnt_ = 0
+        if evtDef.args then
+            for _, arg in ipairs(evtDef.args) do
+                if not arg.defa then
+                    argReqCnt_ = argReqCnt_ + 1
+                end
+            end
+        end
+        tf.info.cmd[evtName].argReqCnt = argReqCnt_
+    end
+
     tf.net.send("pc_init", { tf.pc.label, tf.pc.labelSub }, tf.net.BROADCAST_CH)
     if tf.pc.label == "main" then
         tf.net.mainCh = tf.pc.netCh
@@ -582,91 +595,81 @@ function tf.main.free()
     tf.net.peri = nil
 end
 
+function tf.main.evtProc(evt)
+    local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
+    local evtFnTab = tf.at[evtType]
+    if not evtFnTab then
+        return
+    end
+    local evtFn = tf.if_(type(evtFnTab[evtName]) == "function", evtFnTab[evtName], nil)
+    if evtType == "cmd" then
+        local cmdDef = tf.info.cmd[evtName]
+
+        if evtFn then
+            if cmdDef then
+            else
+                tf.chat.send("Command '" ..
+                    evtName .. "' is not defined yet! Define tf.info.cmd." .. evtName .. " = {...}")
+                return
+            end
+        else
+            if cmdDef then
+                tf.chat.send("Command '" ..
+                    evtName .. "' is not implemented yet! Define function tf.at.cmd." .. evtName .. "(...)")
+            else
+                tf.chat.send("Unknown command '" .. evtName .. "'! Use command 'help' for more info")
+            end
+            return
+        end
+
+        if (#evtParams - 1) >= cmdDef.argReqCnt then
+            local args = { table.unpack(evtParams, 2) }
+            local sender = evtParams[1]
+
+            local isArgErr = false
+            for i, argDef in ipairs(cmdDef.args or {}) do
+                args[i] = tf.type.castStrict(args[i] or argDef.defa, argDef.type)
+                if not args[i] then
+                    isArgErr = true
+                elseif argDef.picks and not table.contains(argDef.picks, args[i]) and not table.contains(argDef.picks, "*") then
+                    isArgErr = true
+                end
+                if isArgErr then
+                    tf.chat.send("Parameter named '" .. argDef.name .. "' is invalid!")
+                    break
+                end
+            end
+
+            if isArgErr then
+                tf.chat.send(tf.cmdHelpStr(evtName))
+            else
+                evtFn(args, sender, evtName)
+            end
+        else
+            tf.chat.send(tf.cmdHelpStr(evtName))
+        end
+    elseif evtType == "msg" then
+        if evtFn then
+            local senderCh, dist = evtParams[1], evtParams[2]
+            local dat = { table.unpack(evtParams, 3) }
+            evtFn(dat, senderCh, dist)
+        end
+    else
+        if evtFn then
+            evtFn(evtParams)
+        end
+    end
+end
+
 function tf.main.run()
     local initErr = tf.main.init(tf.pc.label, tf.pc.labelSub)
     if initErr then
         error(initErr)
     end
 
-    -- Calculate required argument counts for commands based on their definitions
-    for evtName, evtDef in pairs(tf.info.cmd) do
-        local argReqCnt_ = 0
-        if evtDef.args then
-            for _, arg in ipairs(evtDef.args) do
-                if not arg.defa then
-                    argReqCnt_ = argReqCnt_ + 1
-                end
-            end
-        end
-        tf.info.cmd[evtName].argReqCnt = argReqCnt_
-    end
-
     while true do
         local evt = tf.evt.wait()
-        local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
-        local evtFnTab = tf.at[evtType]
-        if not evtFnTab then
-            goto next_evt
-        end
-        local evtFn = tf.if_(type(evtFnTab[evtName]) == "function", evtFnTab[evtName], nil)
-        if evtType == "cmd" then
-            local cmdDef = tf.info.cmd[evtName]
-
-            if evtFn then
-                if cmdDef then
-                else
-                    tf.chat.send("Command '" ..
-                        evtName .. "' is not defined yet! Define tf.info.cmd." .. evtName .. " = {...}")
-                    goto next_evt
-                end
-            else
-                if cmdDef then
-                    tf.chat.send("Command '" ..
-                        evtName .. "' is not implemented yet! Define function tf.at.cmd." .. evtName .. "(...)")
-                else
-                    tf.chat.send("Unknown command '" .. evtName .. "'! Use command 'help' for more info")
-                end
-                goto next_evt
-            end
-
-            if (#evtParams - 1) >= cmdDef.argReqCnt then
-                local args = { table.unpack(evtParams, 2) }
-                local sender = evtParams[1]
-
-                local isArgErr = false
-                for i, argDef in ipairs(cmdDef.args or {}) do
-                    args[i] = tf.type.castStrict(args[i] or argDef.defa, argDef.type)
-                    if not args[i] then
-                        isArgErr = true
-                    elseif argDef.picks and not table.contains(argDef.picks, args[i]) and not table.contains(argDef.picks, "*") then
-                        isArgErr = true
-                    end
-                    if isArgErr then
-                        tf.chat.send("Parameter named '" .. argDef.name .. "' is invalid!")
-                        break
-                    end
-                end
-
-                if isArgErr then
-                    tf.chat.send(tf.cmdHelpStr(evtName))
-                else
-                    evtFn(args, sender, evtName)
-                end
-            else
-                tf.chat.send(tf.cmdHelpStr(evtName))
-            end
-        elseif evtType == "msg" then
-            if evtFn then
-                local senderCh, dist = evtParams[1], evtParams[2]
-                local dat = { table.unpack(evtParams, 3) }
-                evtFn(dat, senderCh, dist)
-            end
-        else
-            if evtFn then
-                evtFn(evtParams)
-            end
-        end
-        ::next_evt::
+        tf.main.evtProc(evt)
     end
 
     tf.main.free()
