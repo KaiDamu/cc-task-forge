@@ -221,7 +221,7 @@ function tf.chat.sendAs(msg, sender, range)
             return
         end
     end
-    os.queueEvent("tf_chat_send", msg, sender, range)
+    tf.queue.add(tf.evt.altQueue, { "tf_chat_send", msg, sender, range })
 end
 
 function tf.chat.send(msg, range)
@@ -383,7 +383,8 @@ function tf.pc.labelExToDat(labelEx)
 end
 
 tf.evt = {
-    prioQueue = tf.queue.new()
+    prioQueue = tf.queue.new(),
+    altQueue = tf.queue.new()
 }
 
 function tf.evt._wait(doSkipQueue)
@@ -512,6 +513,7 @@ function tf.math.trilaterate4(p1, r1, p2, r2, p3, r3, p4, r4)
 end
 
 tf.time = {
+    WAIT_TICK = 0.05,
     WAIT_STD = 1.5,
     WAIT_BROADCAST = 5.0
 }
@@ -677,9 +679,16 @@ function tf.main.loopMain()
 end
 
 function tf.main.loopSub()
+    local sleepRowCnt = 0
     while true do
-        local evtDat = { os.pullEvent() }
-        tf.main.evtProcSub(evtDat)
+        local evtDat = tf.queue.get(tf.evt.altQueue)
+        if evtDat then
+            tf.main.evtProcSub(evtDat)
+            sleepRowCnt = 0
+        else
+            sleep(math.min(sleepRowCnt * (tf.time.WAIT_TICK * 0.02) + tf.time.WAIT_TICK, tf.time.WAIT_STD * 0.5))
+            sleepRowCnt = sleepRowCnt + 1
+        end
     end
 end
 
