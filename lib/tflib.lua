@@ -20,7 +20,7 @@ tf.at = {
             tf.net.send("ping_res", {}, senderCh)
         end,
         cmd_run = function(dat)
-            tf.at.cmd[dat[1]](dat[2], dat[3])
+            tf.at.cmd[dat[3]](dat[1], dat[2])
         end,
         reboot = function()
             os.reboot()
