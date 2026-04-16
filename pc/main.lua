@@ -211,8 +211,14 @@ function tf.at.msg.cmds_register(dat, senderCh)
             tf.info.cmd[cmdName] = cmdDef
             tf.info.cmd[cmdName].senderChs = { senderCh }
             tf.at.cmd[cmdName] = function(args, sender, cmdName)
-                for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
+                if tf.info.cmd[cmdName].dstArgI then
+                    local dstArg = args[tf.info.cmd[cmdName].dstArgI]
+                    local ch = tf.net.labelToCh(dstArg)
                     tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                else
+                    for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
+                        tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                    end
                 end
                 local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", #tf.info.cmd[cmdName].senderChs, tf.time.WAIT_STD)
                 if #cmdRunRes ~= #tf.info.cmd[cmdName].senderChs then

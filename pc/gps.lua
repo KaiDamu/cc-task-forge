@@ -1,4 +1,7 @@
 tf.info.cmd.hello = {
+    args = {
+        { name = "pc", type = tf.type.LABEL_M, isDst = true }
+    },
     desc = "Just say hi to the sender."
 }
 function tf.at.cmd.hello(args, sender)

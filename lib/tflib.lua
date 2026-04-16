@@ -564,17 +564,22 @@ function tf.main.init(label, labelSub)
     tf.pc.labelSub = labelSub or 1
     tf.pc.name = name
 
-    -- Calculate required argument counts for commands based on their definitions
-    for evtName, evtDef in pairs(tf.info.cmd) do
+    -- Preprocess command info
+    for cmdName, cmdDef in pairs(tf.info.cmd) do
         local argReqCnt_ = 0
-        if evtDef.args then
-            for _, arg in ipairs(evtDef.args) do
+        local dstArgI_ = nil
+        if cmdDef.args then
+            for i, arg in ipairs(cmdDef.args) do
                 if not arg.defa then
                     argReqCnt_ = argReqCnt_ + 1
                 end
+                if arg.isDst then
+                    dstArgI_ = i
+                end
             end
         end
-        tf.info.cmd[evtName].argReqCnt = argReqCnt_
+        tf.info.cmd[cmdName].argReqCnt = argReqCnt_
+        tf.info.cmd[cmdName].dstArgI = dstArgI_
     end
 
     tf.net.send("pc_init", { tf.pc.label, tf.pc.labelSub }, tf.net.BROADCAST_CH)
@@ -817,7 +822,7 @@ function tf.cmdHelpStr(cmdName)
             if arg.defa then
                 enclose = { " [", "]" }
             end
-            infoMsg = infoMsg .. enclose[1] .. arg.name .. ": " .. tf.type.toStr[arg.type]
+            infoMsg = infoMsg .. enclose[1] .. arg.name .. ": " .. tf.if_(arg.isDst, "@", "") .. tf.type.toStr[arg.type]
             if arg.picks then
                 infoMsg = infoMsg .. " (" .. table.concat(arg.picks, " | ") .. ")"
             end
