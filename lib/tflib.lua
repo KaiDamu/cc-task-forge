@@ -221,14 +221,7 @@ function tf.chat.sendAs(msg, sender, range)
             return
         end
     end
-    sender = sender or "UNKNOWN"
-    if tf.time.game() - tf.chat.lastSendTime < tf.chat.SEND_CD then
-        sleep(tf.chat.SEND_CD - (tf.time.game() - tf.chat.lastSendTime))
-    end
-    while not tf.periChat.sendMessage(msg, sender, "<>", nil, range) do
-        sleep(0.05)
-    end
-    tf.chat.lastSendTime = tf.time.game()
+    os.queueEvent("tf_chat_send", msg, sender, range)
 end
 
 function tf.chat.send(msg, range)
@@ -596,7 +589,7 @@ function tf.main.free()
     tf.net.peri = nil
 end
 
-function tf.main.evtProc(evt)
+function tf.main.evtProcMain(evt)
     local evtType, evtName, evtParams = evt[1], evt[2], evt[3]
     local evtFnTab = tf.at[evtType]
     if not evtFnTab then
@@ -662,17 +655,40 @@ function tf.main.evtProc(evt)
     end
 end
 
+function tf.main.evtProcSub(evtDat)
+    if evtDat[1] == "tf_chat_send" then
+        local msg, sender, range = evtDat[2], evtDat[3], evtDat[4]
+        sender = sender or "UNKNOWN"
+        if tf.time.game() - tf.chat.lastSendTime < tf.chat.SEND_CD then
+            sleep(tf.chat.SEND_CD - (tf.time.game() - tf.chat.lastSendTime))
+        end
+        while not tf.periChat.sendMessage(msg, sender, "<>", nil, range) do
+            sleep(0.05)
+        end
+        tf.chat.lastSendTime = tf.time.game()
+    end
+end
+
+function tf.main.loopMain()
+    while true do
+        local evt = tf.evt.wait()
+        tf.main.evtProcMain(evt)
+    end
+end
+
+function tf.main.loopSub()
+    while true do
+        local evtDat = { os.pullEvent() }
+        tf.main.evtProcSub(evtDat)
+    end
+end
+
 function tf.main.run()
     local initErr = tf.main.init(tf.pc.label, tf.pc.labelSub)
     if initErr then
         error(initErr)
     end
-
-    while true do
-        local evt = tf.evt.wait()
-        tf.main.evtProc(evt)
-    end
-
+    parallel.waitForAny(tf.main.loopMain, tf.main.loopSub)
     tf.main.free()
 end
 
