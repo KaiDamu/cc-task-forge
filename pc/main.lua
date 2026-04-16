@@ -67,8 +67,16 @@ tf.info.cmd.ping = {
 }
 function tf.at.cmd.ping()
     tf.net.send("ping_req", {}, tf.net.BROADCAST_CH)
-    local pongs = tf.evt.waitForMsgs("ping_res", tf.math.HUGE, tf.time.WAIT_STD)
-    tf.chat.send("Online devices: " .. (#pongs + 1))
+    local pingResList = tf.evt.waitForMsgs("ping_res", tf.math.HUGE, tf.time.WAIT_STD)
+    local msg = "Online devices: " .. (#pingResList + 1) .. " - "
+    local labels = { "Main" }
+    for _, res in ipairs(pingResList) do
+        local label = tf.net.chToLabel(res[1], true)
+        table.insert(labels, label)
+    end
+    table.sort(labels)
+    msg = msg .. table.concat(labels, ", ")
+    tf.chat.send(msg)
 end
 
 tf.info.cmd.log = {
@@ -259,7 +267,11 @@ function tf.at.msg.cmds_register(dat, senderCh)
                         tf.at.cmd[cmdName] = nil
                         tf.chat.send("Command '" .. cmdName .. "' is no longer available!")
                     else
-                        tf.chat.send("Command '" .. cmdName .. "' was ran by less computers than expected!")
+                        if #cmdRunRes > 0 then
+                            tf.chat.send("Command '" .. cmdName .. "' was ran by less computers than expected!")
+                        else
+                            tf.chat.send("Command '" .. cmdName .. "' was not ran by the destination computer!")
+                        end
                     end
                 end
             end
