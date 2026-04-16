@@ -190,7 +190,13 @@ function tf.at.msg.cmds_register(dat, senderCh)
         if not tf.info.cmd[cmdName] then
             tf.info.cmd[cmdName] = cmdDef
             tf.at.cmd[cmdName] = function(args, sender, cmdName)
-                tf.net.send("cmd_run", { args, sender, cmdName }, senderCh)
+                tf.net.send("cmd_run_req", { args, sender, cmdName }, senderCh)
+                local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", 1, tf.time.WAIT_STD)
+                if #cmdRunRes ~= 1 then
+                    tf.info.cmd[cmdName] = nil
+                    tf.at.cmd[cmdName] = nil
+                    tf.chat.send("Command '" .. cmdName .. "' is no longer available!")
+                end
             end
         end
     end

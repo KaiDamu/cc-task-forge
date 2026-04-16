@@ -19,7 +19,8 @@ tf.at = {
         ping_req = function(dat, senderCh)
             tf.net.send("ping_res", {}, senderCh)
         end,
-        cmd_run = function(dat)
+        cmd_run_req = function(dat, senderCh)
+            tf.net.send("cmd_run_res", {}, senderCh)
             tf.at.cmd[dat[3]](dat[1], dat[2])
         end,
         reboot = function()
@@ -807,4 +808,36 @@ table.contains = table.contains or function(tab, val)
         end
     end
     return false
+end
+
+table.isSame = table.isSame or function(a, b)
+    local isSame = function(a, b, seen)
+        if a == b then
+            return true
+        end
+        if type(a) ~= type(b) or type(a) ~= "table" then
+            return false
+        end
+        if seen[a] and seen[a] == b then
+            return true
+        end
+        seen[a] = b
+        if getmetatable(a) ~= getmetatable(b) then
+            return false
+        end
+        local checkedKeys = {}
+        for k, v in pairs(a) do
+            checkedKeys[k] = true
+            if not isSame(v, b[k], seen) then
+                return false
+            end
+        end
+        for k in pairs(b) do
+            if not checkedKeys[k] then
+                return false
+            end
+        end
+        return true
+    end
+    return isSame(a, b, {})
 end
