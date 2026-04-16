@@ -195,7 +195,9 @@ function tf.at.msg.cmds_register(dat, senderCh)
     for cmdName, cmdDef in pairs(dat[1]) do
         if not tf.info.cmd[cmdName] then
             tf.info.cmd[cmdName] = cmdDef
-            tf.info.cmd[cmdName].senderCh = senderCh
+            tf.at.cmd[cmdName] = function(args, sender, cmdName)
+                tf.net.send("cmd_run", { args, sender, cmdName }, senderCh)
+            end
         end
     end
 end
