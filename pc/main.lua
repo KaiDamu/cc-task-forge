@@ -211,21 +211,49 @@ function tf.at.msg.cmds_register(dat, senderCh)
             tf.info.cmd[cmdName] = cmdDef
             tf.info.cmd[cmdName].senderChs = { senderCh }
             tf.at.cmd[cmdName] = function(args, sender, cmdName)
+                local chReqList = {}
                 if tf.info.cmd[cmdName].dstArgI then
                     local dstArg = args[tf.info.cmd[cmdName].dstArgI]
                     local ch = tf.net.labelToCh(tf.pc.labelDatToM(dstArg[1], dstArg[2]))
-                    tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                    if table.contains(tf.info.cmd[cmdName].senderChs, ch) then
+                        tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                        table.insert(chReqList, ch)
+                    else
+                        tf.chat.send("Invalid destination set for command '" .. cmdName .. "'!")
+                        return
+                    end
                 else
                     for _, ch in ipairs(tf.info.cmd[cmdName].senderChs) do
                         tf.net.send("cmd_run_req", { args, sender, cmdName }, ch)
+                        table.insert(chReqList, ch)
                     end
                 end
-                local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", #tf.info.cmd[cmdName].senderChs, tf.time.WAIT_STD)
-                if #cmdRunRes ~= #tf.info.cmd[cmdName].senderChs then
-                    tf.info.cmd[cmdName].senderChs = {}
-                    for _, res in ipairs(cmdRunRes) do
-                        table.insert(tf.info.cmd[cmdName].senderChs, res[1])
+
+                local cmdRunRes = tf.evt.waitForMsgs("cmd_run_res", #chReqList, tf.time.WAIT_STD)
+                if #cmdRunRes ~= #chReqList then
+                    local chDelList = {}
+                    for _, chReq in ipairs(chReqList) do
+                        local isChIncluded = false
+                        for _, res in ipairs(cmdRunRes) do
+                            if res[1] == chReq then
+                                isChIncluded = true
+                                break
+                            end
+                        end
+                        if not isChIncluded then
+                            table.insert(chDelList, chReq)
+                        end
                     end
+
+                    for _, chDel in ipairs(chDelList) do
+                        for i = #tf.info.cmd[cmdName].senderChs, 1, -1 do
+                            if tf.info.cmd[cmdName].senderChs[i] == chDel then
+                                table.remove(tf.info.cmd[cmdName].senderChs, i)
+                                break
+                            end
+                        end
+                    end
+
                     if #tf.info.cmd[cmdName].senderChs == 0 then
                         tf.info.cmd[cmdName] = nil
                         tf.at.cmd[cmdName] = nil
