@@ -144,14 +144,17 @@ end
 
 tf.info.cmd.help = {
     args = {
-        { name = "mode", type = tf.type.STR, picks = { "list", "cmd" } },
+        { name = "mode", type = tf.type.STR, picks = { "list", "for", "topic" } },
         { name = "name", type = tf.type.STR, defa = "" }
     },
-    desc = "Get help: With 'list' mode, list all commands. With 'cmd' mode, get detailed info about a specific command."
+    desc =
+    "Get info: List all commands & topics with 'list'. Get detailed command info with 'for <command>'. Get topic info with 'topic <name>'."
 }
 function tf.at.cmd.help(args)
-    if args[1] == "cmd" then
+    if args[1] == "for" then
         tf.chat.send(tf.cmdHelpStr(args[2]))
+    elseif args[1] == "topic" then
+        tf.chat.send("Topics are coming soon!")
     elseif args[1] == "list" then
         local cmdList = "Commands:"
         local sortedCmds = {}
@@ -170,19 +173,19 @@ end
 ---- ==== MSG ==== ----
 ---- ==== === ==== ----
 
+function tf.at.msg.pc_connect_req(dat, senderCh)
+    local labelM = tf.pc.labelDatToM(dat[1], dat[2])
+    tf.net.labelToChCache[labelM] = senderCh
+    tf.net.chToLabelCache[senderCh] = labelM
+    tf.net.send("pc_connect_res", {}, senderCh)
+end
+
 function tf.at.msg.chat_send(dat, senderCh)
     tf.chat.sendAs(dat[1], tf.net.chToLabel(senderCh, true))
 end
 
 function tf.at.msg.con_send(dat, senderCh)
     print("<" .. tf.net.chToLabel(senderCh, true) .. "> " .. dat[1])
-end
-
-function tf.at.msg.pc_init(dat, senderCh)
-    local labelM = tf.pc.labelDatToM(dat[1], dat[2])
-    tf.net.labelToChCache[labelM] = senderCh
-    tf.net.chToLabelCache[senderCh] = labelM
-    tf.net.send("pc_accept", {}, senderCh)
 end
 
 function tf.at.msg.cmds_register(dat, senderCh)

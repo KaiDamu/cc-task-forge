@@ -8,6 +8,11 @@ tf.at = {
     sys = {},
     cmd = {},
     msg = {
+        pc_init = function(dat, senderCh)
+            if dat[1] == "main" and dat[2] == 1 then
+                tf.net.connect(senderCh)
+            end
+        end,
         pc_label_req = function(dat, senderCh)
             if dat[1] then
                 if dat[2] ~= tf.pc.label or dat[3] ~= tf.pc.labelSub then
@@ -274,6 +279,24 @@ function tf.net.chToLabel(pcNetCh, doFancy)
         end
     end
     return pcLabelM
+end
+
+function tf.net.connect(toCh)
+    if tf.pc.label == "main" then
+        tf.net.mainCh = tf.pc.netCh
+    else
+        tf.net.send("pc_connect_req", { tf.pc.label, tf.pc.labelSub }, toCh)
+        local pcAccept = tf.evt.waitForMsgs("pc_connect_res", 1, tf.time.WAIT_STD)[1]
+        if not pcAccept then
+            print("Waiting for main to accept connection...")
+            while not pcAccept do
+                tf.net.send("pc_connect_req", { tf.pc.label, tf.pc.labelSub }, toCh)
+                pcAccept = tf.evt.waitForMsgs("pc_connect_res", 1, tf.time.WAIT_BROADCAST)[1]
+            end
+        end
+        tf.net.mainCh = pcAccept[1]
+        tf.net.send("cmds_register", { tf.info.cmd }, tf.net.mainCh)
+    end
 end
 
 function tf.net.send(msgName, msgDat, ch)
@@ -555,20 +578,7 @@ function tf.main.init(label, labelSub)
     end
 
     tf.net.send("pc_init", { tf.pc.label, tf.pc.labelSub }, tf.net.BROADCAST_CH)
-    if tf.pc.label == "main" then
-        tf.net.mainCh = tf.pc.netCh
-    else
-        local pcAccept = tf.evt.waitForMsgs("pc_accept", 1, tf.time.WAIT_STD)[1]
-        if not pcAccept then
-            print("Waiting for main to accept connection...")
-        end
-        while not pcAccept do
-            tf.net.send("pc_init", { tf.pc.label, tf.pc.labelSub }, tf.net.BROADCAST_CH)
-            pcAccept = tf.evt.waitForMsgs("pc_accept", 1, tf.time.WAIT_BROADCAST)[1]
-        end
-        tf.net.mainCh = pcAccept[1]
-        tf.net.send("cmds_register", { tf.info.cmd }, tf.net.mainCh)
-    end
+    tf.net.connect(tf.net.BROADCAST_CH)
 
     tf.con.writeCol(tf.str.toTitle(tf.pc.labelDatToM(tf.pc.label, tf.pc.labelSub)) .. " online!", colors.green)
 
